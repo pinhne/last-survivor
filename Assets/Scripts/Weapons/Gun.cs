@@ -9,6 +9,25 @@ public class Gun : MonoBehaviour
 
     // ── References ───────────────────────────────────────────────────────────
     [SerializeField] private WeaponData _data;
+
+    public void Initialize(WeaponData data)
+    {
+        _data = data;
+
+        if (_data == null)
+        {
+            Debug.LogError("[Gun] Initialize failed: WeaponData is null");
+            return;
+        }
+
+        _currentAmmo = _data.maxAmmo;
+        _reserveAmmo = _data.maxReserve;
+        _isReloading = false;
+
+        OnAmmoChanged?.Invoke(_currentAmmo, _reserveAmmo);
+
+        Debug.Log($"[Gun] Init {_data.weaponName} | Ammo: {_currentAmmo}/{_reserveAmmo}");
+    }
     [SerializeField] private Transform _gunBarrel;     // điểm spawn MuzzleFlash (Vy gắn vào)
     [SerializeField] private GameObject _muzzleFlashPrefab; // Vy tạo prefab, Bình kéo vào
 
@@ -51,6 +70,10 @@ public class Gun : MonoBehaviour
     {
         HandleInput();
         HandleRecoilRecover();
+        if (Input.GetMouseButtonDown(0))
+        {
+            Debug.Log("[Gun] Left click received");
+        }
     }
 
     // ── Input Handling ────────────────────────────────────────────────────────
@@ -149,26 +172,61 @@ public class Gun : MonoBehaviour
     }
 
     // ── Reload ────────────────────────────────────────────────────────────────
+    private void TryReload()
+    {
+        if (_data == null)
+        {
+            Debug.LogError("[Gun] Reload blocked: WeaponData is null");
+            return;
+        }
+
+        Debug.Log(
+            $"[Gun] R pressed on {_data.weaponName} | " +
+            $"Ammo: {_currentAmmo}/{_data.maxAmmo} | " +
+            $"Reserve: {_reserveAmmo} | " +
+            $"Reloading: {_isReloading}"
+        );
+
+        if (_isReloading)
+        {
+            Debug.Log("[Gun] Reload blocked: already reloading");
+            return;
+        }
+
+        if (_currentAmmo >= _data.maxAmmo)
+        {
+            Debug.Log("[Gun] Reload blocked: magazine already full");
+            return;
+        }
+
+        if (_reserveAmmo <= 0)
+        {
+            Debug.Log("[Gun] Reload blocked: no reserve ammo");
+            return;
+        }
+
+        StartCoroutine(Reload());
+    }
     private IEnumerator Reload()
     {
         _isReloading = true;
 
-        AudioManager.Instance?.PlaySFX(_data.reloadSound);
+        Debug.Log($"[Gun] Reload start: {_data.weaponName}, wait {_data.reloadTime}s");
 
         yield return new WaitForSeconds(_data.reloadTime);
 
-        // Tính số đạn cần nạp thêm
-        int needed = _data.maxAmmo - _currentAmmo;
-        int refill = Mathf.Min(needed, _reserveAmmo);
+        int neededAmmo = _data.maxAmmo - _currentAmmo;
+        int ammoToLoad = Mathf.Min(neededAmmo, _reserveAmmo);
 
-        _currentAmmo += refill;
-        _reserveAmmo -= refill;
+        _currentAmmo += ammoToLoad;
+        _reserveAmmo -= ammoToLoad;
 
         _isReloading = false;
 
         OnAmmoChanged?.Invoke(_currentAmmo, _reserveAmmo);
-    }
 
+        Debug.Log($"[Gun] Reload done: {_data.weaponName} | Ammo: {_currentAmmo}/{_reserveAmmo}");
+    }
     // ── Recoil ────────────────────────────────────────────────────────────────
     private void ApplyRecoil()
     {

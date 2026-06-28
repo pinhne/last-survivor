@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 369c8fe1fbd99a44682e8f2883d1a272, type: 3}
+  m_Name: Weapon_Rifle
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  weaponName: Rifle
+  weaponIcon: {fileID: 0}
+  damage: 18
+  fireRate: 8
+  range: 100
+  isAutoFire: 0
+  maxAmmo: 30
+  maxReserve: 120
+  reloadTime: 2
+  recoilAmount: 2
+  recoilRecover: 5
+  isShotgun: 0
+  pelletCount: 6
+  spreadAngle: 5
+  isSniper: 0
+  sniperFOV: 20
+  weaponPrefab: {fileID: 3510412251175760290, guid: 6e5300cf67078ca48baf9671af625aa9, type: 3}
+  shootSound: {fileID: 0}
+  reloadSound: {fileID: 0}
+  emptySound: {fileID: 0}
