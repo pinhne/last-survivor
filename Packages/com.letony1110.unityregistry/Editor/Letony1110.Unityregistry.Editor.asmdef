@@ -1,0 +1,10 @@
+{
+    "name": "Letony1110.Unityregistry.Editor",
+    "references": [
+      "Letony1110.Unityregistry"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

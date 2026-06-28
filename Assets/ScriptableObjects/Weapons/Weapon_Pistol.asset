@@ -28,7 +28,7 @@ MonoBehaviour:
   spreadAngle: 5
   isSniper: 0
   sniperFOV: 20
-  weaponPrefab: {fileID: 2880488142354770864, guid: 559a7f9e57087c841890fc27761e3bbd, type: 3}
+  weaponPrefab: {fileID: 1820542826745561358, guid: 559a7f9e57087c841890fc27761e3bbd, type: 3}
   shootSound: {fileID: 0}
   reloadSound: {fileID: 0}
   emptySound: {fileID: 0}

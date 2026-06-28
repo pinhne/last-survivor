@@ -1,4 +1,8 @@
 ﻿<Solution>
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="Letony1110.Unityregistry.Editor.Tests.csproj" />
+  <Project Path="Letony1110.Unityregistry.csproj" />
+  <Project Path="Letony1110.Unityregistry.Editor.csproj" />
+  <Project Path="Letony1110.Unityregistry.Tests.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
 </Solution>

@@ -4,6 +4,19 @@ using UnityEngine;
 
 public class WeaponManager : MonoBehaviour
 {
+    private Animator _playerAnimator;
+    private static readonly int WeaponIndexHash = Animator.StringToHash("WeaponIndex");
+    void Awake()
+    {
+        // Lấy Animator từ HumanM_Model (con của Player)
+        _playerAnimator = GetComponentInChildren<Animator>();
+    }
+
+    // Trong hàm SwitchWeapon (hoặc UnlockWeapon) — thêm dòng này
+    private void SetWeaponAnimation(int index)
+    {
+        _playerAnimator?.SetInteger(WeaponIndexHash, index);
+    }
     // ── Static Events (Thu Hà lắng nghe để update weapon icon UI) ───────────
     public static event Action<WeaponData> OnWeaponChanged;
 
@@ -67,6 +80,7 @@ public class WeaponManager : MonoBehaviour
         _gunInstances[_currentIndex].gameObject.SetActive(true);
         // Gun.OnEnable() tự broadcast OnAmmoChanged khi SetActive(true)
         // Không gọi Gun.OnAmmoChanged từ đây — C# không cho invoke event từ class ngoài
+        SetWeaponAnimation(index);
 
         OnWeaponChanged?.Invoke(_unlockedWeapons[_currentIndex]);
     }
@@ -104,6 +118,8 @@ public class WeaponManager : MonoBehaviour
         Gun gun = weaponObj.GetComponent<Gun>();
         if (gun == null)
             gun = weaponObj.AddComponent<Gun>();
+
+        gun.Initialize(weaponData);   // ← THÊM DÒNG NÀY
 
         weaponObj.SetActive(false);
 
