@@ -176,6 +176,8 @@ MonoBehaviour:
   _data: {fileID: 11400000, guid: 34f4778fa41357744bce1b28d2cd4fb0, type: 2}
   _gunBarrel: {fileID: 6808333000637573339}
   _muzzleFlashPrefab: {fileID: 0}
+  _weaponVisualRoot: {fileID: 0}
+  _weaponAnimator: {fileID: 0}
 --- !u!1 &2198358567568999313
 GameObject:
   m_ObjectHideFlags: 0
@@ -742,7 +744,7 @@ Transform:
   m_GameObject: {fileID: 8774820759721412880}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.01, y: 1.461, z: 0.265}
+  m_LocalPosition: {x: 0.002, y: 0.049, z: 0.265}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

@@ -3,6 +3,7 @@ using UnityEngine;
 public class EnemyHealth : MonoBehaviour
 {
     [SerializeField] protected float maxHP = 60f;
+    [SerializeField] protected int reward = 15;
     protected float _currentHP;
 
     protected virtual void Start() => _currentHP = maxHP;
@@ -15,9 +16,14 @@ public class EnemyHealth : MonoBehaviour
 
     protected virtual void Die()
     {
-        EconomyManager.Instance?.AddMoney(15); // override ở subclass để đổi reward
+        GetComponent<EnemyAI>()?.SetDead();
+
+        Collider col = GetComponent<Collider>();
+        if (col != null) col.enabled = false;
+
+        EconomyManager.Instance?.AddMoney(reward);
         LevelManager.Instance?.RegisterEnemyKilled();
-        // Play animation rồi destroy
+
         Destroy(gameObject, 3f);
     }
 }

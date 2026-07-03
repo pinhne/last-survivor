@@ -9,16 +9,16 @@ public class LevelManager : MonoBehaviour
     public const float LEVEL_TIME_LIMIT = 300f;
     public const int TOTAL_LEVELS = 2;
 
-    public int CurrentLevel   { get; private set; }
+    public int CurrentLevel { get; private set; }
     public float TimeRemaining { get; private set; }
-    public int EnemiesAlive   { get; private set; }
-    public bool IsBossPhase   { get; private set; }
+    public int EnemiesAlive { get; private set; }
+    public bool IsBossPhase { get; private set; }
 
     public static event Action<float> OnTimerUpdated;
-    public static event Action<int>   OnEnemyCountChanged;
-    public static event Action        OnAllNormalWavesCleared;
-    public static event Action        OnLevelVictory;
-    public static event Action        OnLevelFailed;
+    public static event Action<int> OnEnemyCountChanged;
+    public static event Action OnAllNormalWavesCleared;
+    public static event Action OnLevelVictory;
+    public static event Action OnLevelFailed;
 
     private bool _levelEnded = false;
 
@@ -91,6 +91,14 @@ public class LevelManager : MonoBehaviour
         else
             SceneManager.LoadScene("Victory");
     }
+    private void OnEnable()
+    {
+        PlayerHealth.OnPlayerDeath += TriggerGameOver;
+    }
 
+    private void OnDisable()
+    {
+        PlayerHealth.OnPlayerDeath -= TriggerGameOver;
+    }
     private void LoadGameOver() => SceneManager.LoadScene("GameOver");
 }

@@ -21,13 +21,28 @@ MonoBehaviour:
   maxAmmo: 5
   maxReserve: 12
   reloadTime: 3
-  recoilAmount: 2
-  recoilRecover: 5
+  verticalRecoil: 6
+  horizontalRecoil: 0.4
+  recoilRecoverSpeed: 5
+  weaponKickback: 0.1
+  weaponKickUp: 6
+  weaponKickSide: 0.5
+  weaponReturnSpeed: 8
   isShotgun: 0
   pelletCount: 6
   spreadAngle: 5
+  moveWeaponOnAim: 0
+  aimPositionOffset: {x: 0, y: 0, z: 0}
+  aimEulerOffset: {x: 0, y: 0, z: 0}
   isSniper: 1
-  sniperFOV: 100
+  aimFOV: 45
+  sniperFOV: 18
+  hipLocalPosition: {x: 0, y: 0, z: 0}
+  hipLocalEuler: {x: 0, y: 0, z: 0}
+  aimLocalPosition: {x: 0, y: 0, z: 0}
+  aimLocalEuler: {x: 0, y: 0, z: 0}
+  aimMoveSpeed: 12
+  weaponAnimationIndex: 3
   weaponPrefab: {fileID: 8615345239299250314, guid: e7879c118a542c04098d8d41647941db, type: 3}
   shootSound: {fileID: 0}
   reloadSound: {fileID: 0}

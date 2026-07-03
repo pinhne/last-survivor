@@ -64,6 +64,7 @@ public class PlayerController : MonoBehaviour
         {
             _velocity.y = -2f;
         }
+
     }
 
     private void HandleMovement()

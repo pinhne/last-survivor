@@ -1294,7 +1294,7 @@ Transform:
   m_GameObject: {fileID: 1191038965042982925}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.9, z: 0}
+  m_LocalPosition: {x: 0, y: 0.01, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1511,13 +1511,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   _moveSpeed: 6
-  _jumpHeight: 1.5
-  _gravity: -9.81
+  _jumpHeight: 2
+  _gravity: -32
   _groundCheck: {fileID: 7850019282752326184}
   _groundDistance: 0.4
   _groundMask:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 9
   _animationSmoothTime: 0.1
 --- !u!114 &376346411168218274
 MonoBehaviour:
@@ -1546,6 +1546,9 @@ MonoBehaviour:
   _weaponHolder: {fileID: 1000391166176056090}
   _starterWeapons:
   - {fileID: 11400000, guid: 34f4778fa41357744bce1b28d2cd4fb0, type: 2}
+  - {fileID: 11400000, guid: 61758d894acbb1946ba4ce0ab6b775ed, type: 2}
+  - {fileID: 11400000, guid: 9d4e881496061e44c8060bbbda799674, type: 2}
+  - {fileID: 11400000, guid: c5757d095d98ba546a3b124c0a66fa73, type: 2}
 --- !u!1 &2668605608433959078
 GameObject:
   m_ObjectHideFlags: 0
@@ -1642,15 +1645,15 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.05
-  far clip plane: 0.65
+  near clip plane: 0.01
+  far clip plane: 2.5
   field of view: 55
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 128
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -1874,7 +1877,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1000391166176056090}
-  m_Layer: 8
+  - component: {fileID: 4848405133940295281}
+  m_Layer: 0
   m_Name: WeaponHolder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1890,12 +1894,27 @@ Transform:
   m_GameObject: {fileID: 4095972424487379747}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.3, y: -0.3, z: 0.6}
+  m_LocalPosition: {x: 0.25, y: -0.25, z: 0.45}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3440468739606060334}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4848405133940295281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4095972424487379747}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f99550bc2bd38a4eb99746f21b86362, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponSway
+  swayAmount: 0.02
+  maxSwayAmount: 0.06
+  smoothAmount: 6
 --- !u!1 &4295899412495520977
 GameObject:
   m_ObjectHideFlags: 0
@@ -2131,7 +2150,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 119
+    m_Bits: 319
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -2210,6 +2229,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCamera
   _mouseSensitivity: 100
   _playerBody: {fileID: 2178526110343363457}
+  _targetCamera: {fileID: 7237569284166511548}
+  _armsCamera: {fileID: 7710109540333776685}
+  _defaultFOV: 60
+  _defaultArmsFOV: 55
+  _fovChangeSpeed: 12
+  _maxVerticalRecoil: 12
+  _maxHorizontalRecoil: 4
 --- !u!1 &6574529281785038257
 GameObject:
   m_ObjectHideFlags: 0
@@ -2360,7 +2386,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: d5160a614b2288241830ff54b8a41b7e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

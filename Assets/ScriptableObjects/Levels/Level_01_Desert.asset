@@ -15,16 +15,16 @@ MonoBehaviour:
   levelIndex: 1
   mapScene: Desert
   waves:
-  - enemyPrefab: {fileID: 0}
+  - enemyPrefab: {fileID: 2880779935298703156, guid: bd82d7e47a9c43f4781546aa59622252, type: 3}
     enemyCount: 5
-    spawnInterval: 1.5
-    delayBeforeWave: 0
-  - enemyPrefab: {fileID: 0}
-    enemyCount: 6
-    spawnInterval: 1.2
-    delayBeforeWave: 10
-  - enemyPrefab: {fileID: 0}
+    spawnInterval: 1
+    delayBeforeWave: 1
+  - enemyPrefab: {fileID: 2880779935298703156, guid: bd82d7e47a9c43f4781546aa59622252, type: 3}
     enemyCount: 3
-    spawnInterval: 2
-    delayBeforeWave: 10
-  eliteBossPrefab: {fileID: 0}
+    spawnInterval: 1
+    delayBeforeWave: 1
+  - enemyPrefab: {fileID: 2880779935298703156, guid: bd82d7e47a9c43f4781546aa59622252, type: 3}
+    enemyCount: 3
+    spawnInterval: 1
+    delayBeforeWave: 1
+  eliteBossPrefab: {fileID: 2568547676646950790, guid: ffb00d96f9551eb40a9271740c68e2d6, type: 3}

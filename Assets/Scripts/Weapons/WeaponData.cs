@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>
 /// ScriptableObject chứa toàn bộ thông số của 1 loại súng.
@@ -9,35 +10,73 @@ public class WeaponData : ScriptableObject
 {
     [Header("Info")]
     public string weaponName = "Pistol";
-    public Sprite weaponIcon;               // Thu Hà dùng cho UI
+    public Sprite weaponIcon;
 
     [Header("Stats")]
     public float damage = 25f;
-    public float fireRate = 2f;        // số phát / giây
-    public float range = 100f;      // tầm bắn (raycast distance)
-    public bool isAutoFire = false;     // true = giữ chuột bắn liên tục
+    public float fireRate = 2f;
+    public float range = 100f;
+    public bool isAutoFire = false;
 
     [Header("Ammo")]
-    public int maxAmmo = 12;        // đạn trong băng
-    public int maxReserve = 60;        // đạn dự phòng
-    public float reloadTime = 1.5f;      // giây để reload
+    public int maxAmmo = 12;
+    public int maxReserve = 60;
+    public float reloadTime = 1.5f;
 
-    [Header("Recoil")]
-    public float recoilAmount = 2f;        // độ giật camera lên (degrees)
-    public float recoilRecover = 5f;        // tốc độ camera hồi về
+    [Header("Camera Recoil")]
+    [FormerlySerializedAs("recoilAmount")]
+    public float verticalRecoil = 2f;
+
+    public float horizontalRecoil = 0.25f;
+
+    [FormerlySerializedAs("recoilRecover")]
+    public float recoilRecoverSpeed = 8f;
+
+    [Header("Weapon Visual Recoil")]
+    public float weaponKickback = 0.05f;
+    public float weaponKickUp = 2f;
+    public float weaponKickSide = 0.5f;
+    public float weaponReturnSpeed = 12f;
 
     [Header("Shotgun")]
-    public bool isShotgun = false;     // true chỉ dùng cho Shotgun
-    public int pelletCount = 6;         // số viên đạn mỗi phát
-    public float spreadAngle = 5f;        // góc tản (degrees)
+    public bool isShotgun = false;
+    public int pelletCount = 6;
+    public float spreadAngle = 5f;
 
-    [Header("Sniper")]
-    public bool isSniper = false;     // true chỉ dùng cho Sniper
-    public float sniperFOV = 20f;       // FOV khi zoom scope
+    [Header("Soft Aim Weapon Offset")]
+    public bool moveWeaponOnAim = true;
+
+    // Offset khi giữ chuột phải.
+    // Z dương = đẩy súng ra xa camera hơn.
+    // Y âm = hạ súng xuống.
+    // X có thể chỉnh trái/phải.
+    public Vector3 aimPositionOffset = new Vector3(0f, -0.03f, 0.1f);
+
+    public Vector3 aimEulerOffset = new Vector3(-1f, 0f, 0f);
+
+
+    [Header("Aiming / Zoom")]
+    public bool isSniper = false;
+    public float aimFOV = 50f;
+    public float sniperFOV = 20f;
+
+    [Header("Aim Position")]
+    public Vector3 hipLocalPosition = Vector3.zero;
+    public Vector3 hipLocalEuler = Vector3.zero;
+
+    public Vector3 aimLocalPosition = Vector3.zero;
+    public Vector3 aimLocalEuler = Vector3.zero;
+
+    public float aimMoveSpeed = 12f;
+
+    [Header("Animation")]
+    public int weaponAnimationIndex = 0;
 
     [Header("Prefab")]
-    public GameObject weaponPrefab;         // model súng hiển thị trong tay
-    public AudioClip shootSound;           // Vy điền vào
-    public AudioClip reloadSound;          // Vy điền vào
-    public AudioClip emptySound;           // âm thanh khi hết đạn
+    public GameObject weaponPrefab;
+
+    [Header("Audio")]
+    public AudioClip shootSound;
+    public AudioClip reloadSound;
+    public AudioClip emptySound;
 }

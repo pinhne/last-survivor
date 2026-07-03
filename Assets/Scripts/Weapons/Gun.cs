@@ -4,12 +4,78 @@ using UnityEngine;
 
 public class Gun : MonoBehaviour
 {
-    // ── Static Events (Thu Hà lắng nghe để update ammo UI) ─────────────────
-    public static event Action<int, int> OnAmmoChanged; // (currentAmmo, reserve)
+    private Vector3 _visualKickPositionOffset = Vector3.zero;
+    private Vector3 _visualKickEulerOffset = Vector3.zero;
 
-    // ── References ───────────────────────────────────────────────────────────
+    // ── Static Events ───────────────────────────────────────────────────────
+    public static event Action<int, int> OnAmmoChanged;
+
+    // ── References ─────────────────────────────────────────────────────────
+    [Header("Data")]
     [SerializeField] private WeaponData _data;
 
+    [Header("References")]
+    [SerializeField] private Transform _gunBarrel;
+    [SerializeField] private GameObject _muzzleFlashPrefab;
+    [SerializeField] private Transform _weaponVisualRoot;
+    [SerializeField] private Animator _weaponAnimator;
+
+    private Camera _cam;
+    private PlayerCamera _playerCamera;
+
+    // ── Runtime State ──────────────────────────────────────────────────────
+    private int _currentAmmo;
+    private int _reserveAmmo;
+    private bool _isReloading = false;
+    private bool _isAiming = false;
+    private float _nextFireTime = 0f;
+
+    private Vector3 _visualDefaultLocalPosition;
+    private Quaternion _visualDefaultLocalRotation;
+    private bool _hasVisualPose = false;
+
+
+    // ── Properties ─────────────────────────────────────────────────────────
+    public WeaponData Data => _data;
+    public int CurrentAmmo => _currentAmmo;
+    public int ReserveAmmo => _reserveAmmo;
+    public bool IsReloading => _isReloading;
+    public bool IsAiming => _isAiming;
+
+    // ── Unity Lifecycle ────────────────────────────────────────────────────
+    private void Awake()
+    {
+        ResolveReferences();
+        CacheWeaponVisualPose();
+    }
+
+    private void Start()
+    {
+        if (_data != null && _currentAmmo == 0 && _reserveAmmo == 0)
+            Initialize(_data);
+    }
+
+    private void OnEnable()
+    {
+        if (_data != null)
+            OnAmmoChanged?.Invoke(_currentAmmo, _reserveAmmo);
+    }
+
+    private void OnDisable()
+    {
+        if (_isAiming)
+            SetAiming(false);
+    }
+
+    private void Update()
+    {
+        if (_data == null) return;
+
+        HandleInput();
+        RecoverWeaponVisual();
+    }
+
+    // ── Init ───────────────────────────────────────────────────────────────
     public void Initialize(WeaponData data)
     {
         _data = data;
@@ -20,65 +86,59 @@ public class Gun : MonoBehaviour
             return;
         }
 
+        ResolveReferences();
+        CacheWeaponVisualPose();
+
+        _visualKickPositionOffset = Vector3.zero;
+        _visualKickEulerOffset = Vector3.zero;
         _currentAmmo = _data.maxAmmo;
         _reserveAmmo = _data.maxReserve;
         _isReloading = false;
+        _isAiming = false;
+        _nextFireTime = 0f;
 
         OnAmmoChanged?.Invoke(_currentAmmo, _reserveAmmo);
 
         Debug.Log($"[Gun] Init {_data.weaponName} | Ammo: {_currentAmmo}/{_reserveAmmo}");
     }
-    [SerializeField] private Transform _gunBarrel;     // điểm spawn MuzzleFlash (Vy gắn vào)
-    [SerializeField] private GameObject _muzzleFlashPrefab; // Vy tạo prefab, Bình kéo vào
 
-    private Camera _cam;
-    private int _currentAmmo;
-    private int _reserveAmmo;
-    private bool _isReloading = false;
-    private float _nextFireTime = 0f;
-    private float _currentRecoil = 0f;  // recoil hiện tại (degrees)
-
-    // ── Properties ───────────────────────────────────────────────────────────
-    public WeaponData Data => _data;
-    public int CurrentAmmo => _currentAmmo;
-    public int ReserveAmmo => _reserveAmmo;
-    public bool IsReloading => _isReloading;
-
-    // ── Unity Lifecycle ───────────────────────────────────────────────────────
-    private void Awake()
+    private void ResolveReferences()
     {
-        _cam = Camera.main;
-    }
+        if (_cam == null)
+            _cam = Camera.main;
 
-    private void Start()
-    {
-        _currentAmmo = _data.maxAmmo;
-        _reserveAmmo = _data.maxReserve;
-        OnAmmoChanged?.Invoke(_currentAmmo, _reserveAmmo);
-    }
+        if (_playerCamera == null && _cam != null)
+            _playerCamera = _cam.GetComponent<PlayerCamera>();
 
-    /// <summary>
-    /// Gọi khi WeaponManager SetActive(true) — tự broadcast ammo hiện tại lên UI.
-    /// Giải pháp thay thế cho việc WeaponManager gọi Gun.OnAmmoChanged trực tiếp (không hợp lệ trong C#).
-    /// </summary>
-    private void OnEnable()
-    {
-        OnAmmoChanged?.Invoke(_currentAmmo, _reserveAmmo);
-    }
+        if (_weaponVisualRoot == null)
+            _weaponVisualRoot = transform;
 
-    private void Update()
-    {
-        HandleInput();
-        HandleRecoilRecover();
-        if (Input.GetMouseButtonDown(0))
+        if (_weaponAnimator == null)
+            _weaponAnimator = GetComponentInChildren<Animator>();
+
+        if (_gunBarrel == null)
         {
-            Debug.Log("[Gun] Left click received");
+            Transform foundBarrel = transform.Find("GunBarrel");
+            if (foundBarrel != null)
+                _gunBarrel = foundBarrel;
         }
     }
 
-    // ── Input Handling ────────────────────────────────────────────────────────
+    private void CacheWeaponVisualPose()
+    {
+        if (_weaponVisualRoot == null) return;
+
+        _visualDefaultLocalPosition = _weaponVisualRoot.localPosition;
+        _visualDefaultLocalRotation = _weaponVisualRoot.localRotation;
+
+        _hasVisualPose = true;
+    }
+
+    // ── Input Handling ─────────────────────────────────────────────────────
     private void HandleInput()
     {
+        HandleAimInput();
+
         if (_isReloading) return;
 
         bool shootInput = _data.isAutoFire
@@ -87,91 +147,115 @@ public class Gun : MonoBehaviour
 
         if (shootInput && Time.time >= _nextFireTime)
         {
-            Debug.Log($"[Gun] Shoot! Ammo: {_currentAmmo}"); // ← thêm dòng này
             if (_currentAmmo > 0)
                 Shoot();
             else
                 PlayEmptySound();
         }
 
-        if (Input.GetKeyDown(KeyCode.R) && _currentAmmo < _data.maxAmmo && _reserveAmmo > 0)
-        {
-            Debug.Log("[Gun] Reload!"); // ← thêm dòng này
-            StartCoroutine(Reload());
-        }
+        if (Input.GetKeyDown(KeyCode.R))
+            TryReload();
     }
 
-    // ── Shoot ─────────────────────────────────────────────────────────────────
+    private void HandleAimInput()
+    {
+        bool aimInput = Input.GetMouseButton(1);
+
+        if (aimInput != _isAiming)
+            SetAiming(aimInput);
+    }
+
+    private void SetAiming(bool aiming)
+    {
+        _isAiming = aiming;
+
+        float targetFOV = _data.isSniper ? _data.sniperFOV : _data.aimFOV;
+
+        if (_playerCamera != null)
+            _playerCamera.SetZoom(_isAiming, targetFOV);
+
+        TrySetAnimatorBool("IsAiming", _isAiming);
+    }
+
+    // ── Shoot ──────────────────────────────────────────────────────────────
     private void Shoot()
     {
         _currentAmmo--;
         _nextFireTime = Time.time + (1f / _data.fireRate);
 
-        // Muzzle Flash (Vy tạo prefab)
-        if (_muzzleFlashPrefab != null && _gunBarrel != null)
-            Instantiate(_muzzleFlashPrefab, _gunBarrel.position, _gunBarrel.rotation);
+        SpawnMuzzleFlash();
+        PlayShootSound();
 
-        // Âm thanh bắn
-        AudioManager.Instance?.PlaySFX(_data.shootSound);
-
-        // Bắn đạn
         if (_data.isShotgun)
             ShootShotgun();
         else
             ShootRaycast(_cam.transform.forward);
 
-        // Recoil
-        ApplyRecoil();
+        ApplyWeaponFeedback();
 
-        // Cập nhật UI
+        TrySetAnimatorTrigger("Fire");
+
         OnAmmoChanged?.Invoke(_currentAmmo, _reserveAmmo);
 
-        // Tự động reload khi hết đạn trong băng
         if (_currentAmmo <= 0 && _reserveAmmo > 0)
             StartCoroutine(Reload());
     }
 
-    /// <summary>
-    /// Bắn 1 viên đạn raycast từ camera center theo hướng chỉ định.
-    /// </summary>
+    private void SpawnMuzzleFlash()
+    {
+        if (_muzzleFlashPrefab == null || _gunBarrel == null) return;
+
+        Instantiate(
+            _muzzleFlashPrefab,
+            _gunBarrel.position,
+            _gunBarrel.rotation
+        );
+    }
+
+    private void PlayShootSound()
+    {
+        AudioManager.Instance?.PlaySFX(_data.shootSound);
+    }
+
     private void ShootRaycast(Vector3 direction)
     {
+        if (_cam == null)
+        {
+            Debug.LogError("[Gun] Shoot failed: Camera.main not found.");
+            return;
+        }
+
         Ray ray = new Ray(_cam.transform.position, direction);
 
-        if (Physics.Raycast(ray, out RaycastHit hit, _data.range))
-        {
-            Debug.Log($"[Gun] Hit: {hit.collider.name}, Layer: {LayerMask.LayerToName(hit.collider.gameObject.layer)}");
+        if (!Physics.Raycast(ray, out RaycastHit hit, _data.range))
+            return;
 
-            // Dùng Layer thay vì Tag — an toàn hơn, đúng quy tắc nhóm
-            int enemyLayer = LayerMask.NameToLayer("Enemy");
-            if (hit.collider.gameObject.layer == enemyLayer)
-            {
-                EnemyHealth enemyHealth = hit.collider.GetComponent<EnemyHealth>();
-                if (enemyHealth != null)
-                    enemyHealth.TakeDamage(_data.damage);
-            }
+        Debug.Log($"[Gun] Hit: {hit.collider.name}, Layer: {LayerMask.LayerToName(hit.collider.gameObject.layer)}");
+
+        EnemyHealth enemyHealth = hit.collider.GetComponentInParent<EnemyHealth>();
+
+        if (enemyHealth != null)
+        {
+            enemyHealth.TakeDamage(_data.damage);
         }
     }
 
-    /// <summary>
-    /// Shotgun: bắn nhiều viên đạn cùng lúc theo góc tản.
-    /// </summary>
     private void ShootShotgun()
     {
+        float spreadRadius = Mathf.Tan(_data.spreadAngle * Mathf.Deg2Rad);
+
         for (int i = 0; i < _data.pelletCount; i++)
         {
-            // Tính hướng ngẫu nhiên trong góc tản
-            Vector3 spread = _cam.transform.forward;
-            spread += new Vector3(
-                UnityEngine.Random.Range(-_data.spreadAngle, _data.spreadAngle) * 0.01f,
-                UnityEngine.Random.Range(-_data.spreadAngle, _data.spreadAngle) * 0.01f,
-                0f
-            );
-            ShootRaycast(spread.normalized);
+            Vector3 spreadDirection = _cam.transform.forward;
+
+            spreadDirection += _cam.transform.right * UnityEngine.Random.Range(-spreadRadius, spreadRadius);
+            spreadDirection += _cam.transform.up * UnityEngine.Random.Range(-spreadRadius, spreadRadius);
+
+            ShootRaycast(spreadDirection.normalized);
         }
     }
 
-    // ── Reload ────────────────────────────────────────────────────────────────
+    // ── Reload ─────────────────────────────────────────────────────────────
     private void TryReload()
     {
         if (_data == null)
@@ -179,13 +263,6 @@ public class Gun : MonoBehaviour
             Debug.LogError("[Gun] Reload blocked: WeaponData is null");
             return;
         }
-
-        Debug.Log(
-            $"[Gun] R pressed on {_data.weaponName} | " +
-            $"Ammo: {_currentAmmo}/{_data.maxAmmo} | " +
-            $"Reserve: {_reserveAmmo} | " +
-            $"Reloading: {_isReloading}"
-        );
 
         if (_isReloading)
         {
@@ -207,9 +284,16 @@ public class Gun : MonoBehaviour
 
         StartCoroutine(Reload());
     }
+
     private IEnumerator Reload()
     {
         _isReloading = true;
+
+        if (_isAiming)
+            SetAiming(false);
+
+        TrySetAnimatorTrigger("Reload");
+        AudioManager.Instance?.PlaySFX(_data.reloadSound);
 
         Debug.Log($"[Gun] Reload start: {_data.weaponName}, wait {_data.reloadTime}s");
 
@@ -227,49 +311,124 @@ public class Gun : MonoBehaviour
 
         Debug.Log($"[Gun] Reload done: {_data.weaponName} | Ammo: {_currentAmmo}/{_reserveAmmo}");
     }
-    // ── Recoil ────────────────────────────────────────────────────────────────
-    private void ApplyRecoil()
+
+    // ── Weapon Feedback ────────────────────────────────────────────────────
+    private void ApplyWeaponFeedback()
     {
-        _currentRecoil += _data.recoilAmount;
-        // Chỉ thêm offset, không override toàn bộ rotation
-        _cam.transform.localRotation *= Quaternion.Euler(-_data.recoilAmount, 0f, 0f);
+        if (_playerCamera != null)
+        {
+            _playerCamera.AddRecoil(
+                _data.verticalRecoil,
+                _data.horizontalRecoil,
+                _data.recoilRecoverSpeed
+            );
+        }
+
+        ApplyWeaponVisualKick();
     }
 
-    private void HandleRecoilRecover()
+    private void ApplyWeaponVisualKick()
     {
-        if (_currentRecoil <= 0f) return;
+        if (!_hasVisualPose || _weaponVisualRoot == null || _data == null) return;
 
-        float prevRecoil = _currentRecoil;
-        _currentRecoil = Mathf.Lerp(_currentRecoil, 0f, _data.recoilRecover * Time.deltaTime);
-        if (_currentRecoil < 0.01f) _currentRecoil = 0f;
+        float sideKick = UnityEngine.Random.Range(
+            -_data.weaponKickSide,
+            _data.weaponKickSide
+        );
 
-        // Tính phần đã recover và cộng ngược lại cho camera
-        float recovered = prevRecoil - _currentRecoil;
-        _cam.transform.localRotation *= Quaternion.Euler(recovered, 0f, 0f);
+        _visualKickPositionOffset += Vector3.back * _data.weaponKickback;
+
+        _visualKickEulerOffset += new Vector3(
+            -_data.weaponKickUp,
+            sideKick,
+            0f
+        );
     }
 
-    // ── Sniper Zoom ───────────────────────────────────────────────────────────
-    private void ZoomIn()
+    private void RecoverWeaponVisual()
     {
-        _cam.fieldOfView = _data.sniperFOV;
+        if (!_hasVisualPose || _weaponVisualRoot == null || _data == null) return;
+
+        Vector3 basePosition = _visualDefaultLocalPosition;
+        Quaternion baseRotation = _visualDefaultLocalRotation;
+
+        float kickT = Mathf.Clamp01(_data.weaponReturnSpeed * Time.deltaTime);
+
+        _visualKickPositionOffset = Vector3.Lerp(
+            _visualKickPositionOffset,
+            Vector3.zero,
+            kickT
+        );
+
+        _visualKickEulerOffset = Vector3.Lerp(
+            _visualKickEulerOffset,
+            Vector3.zero,
+            kickT
+        );
+
+        Vector3 finalPosition = basePosition + _visualKickPositionOffset;
+        Quaternion finalRotation =
+            baseRotation * Quaternion.Euler(_visualKickEulerOffset);
+
+        float moveT = Mathf.Clamp01(_data.aimMoveSpeed * Time.deltaTime);
+
+        _weaponVisualRoot.localPosition = Vector3.Lerp(
+            _weaponVisualRoot.localPosition,
+            finalPosition,
+            moveT
+        );
+
+        _weaponVisualRoot.localRotation = Quaternion.Slerp(
+            _weaponVisualRoot.localRotation,
+            finalRotation,
+            moveT
+        );
     }
 
-    private void ZoomOut()
-    {
-        _cam.fieldOfView = 60f; // FOV mặc định
-    }
-
-    // ── Refill Ammo (Shop gọi khi mua thêm đạn) ─────────────────────────────
+    // ── Refill Ammo ────────────────────────────────────────────────────────
     public void RefillAmmo()
     {
+        if (_data == null) return;
+
         _currentAmmo = _data.maxAmmo;
         _reserveAmmo = _data.maxReserve;
+
         OnAmmoChanged?.Invoke(_currentAmmo, _reserveAmmo);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Helpers ────────────────────────────────────────────────────────────
     private void PlayEmptySound()
     {
         AudioManager.Instance?.PlaySFX(_data.emptySound);
+    }
+
+    private void TrySetAnimatorTrigger(string parameterName)
+    {
+        if (!HasAnimatorParameter(parameterName, AnimatorControllerParameterType.Trigger))
+            return;
+
+        _weaponAnimator.SetTrigger(parameterName);
+    }
+
+    private void TrySetAnimatorBool(string parameterName, bool value)
+    {
+        if (!HasAnimatorParameter(parameterName, AnimatorControllerParameterType.Bool))
+            return;
+
+        _weaponAnimator.SetBool(parameterName, value);
+    }
+
+    private bool HasAnimatorParameter(string parameterName, AnimatorControllerParameterType type)
+    {
+        if (_weaponAnimator == null) return false;
+        if (_weaponAnimator.runtimeAnimatorController == null) return false;
+
+        foreach (AnimatorControllerParameter parameter in _weaponAnimator.parameters)
+        {
+            if (parameter.name == parameterName && parameter.type == type)
+                return true;
+        }
+
+        return false;
     }
 }

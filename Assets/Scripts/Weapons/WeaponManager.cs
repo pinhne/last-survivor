@@ -80,7 +80,7 @@ public class WeaponManager : MonoBehaviour
         _gunInstances[_currentIndex].gameObject.SetActive(true);
         // Gun.OnEnable() tự broadcast OnAmmoChanged khi SetActive(true)
         // Không gọi Gun.OnAmmoChanged từ đây — C# không cho invoke event từ class ngoài
-        SetWeaponAnimation(index);
+        SetWeaponAnimation(_unlockedWeapons[_currentIndex].weaponAnimationIndex);
 
         OnWeaponChanged?.Invoke(_unlockedWeapons[_currentIndex]);
     }
