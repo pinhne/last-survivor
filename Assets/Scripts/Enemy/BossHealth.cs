@@ -1,37 +1,118 @@
-using System;
+using System.Collections;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class BossHealth : EnemyHealth
+/// <summary>
+/// Thanh máu Boss — ẩn mặc định, hiện khi OnBossAppeared,
+/// cảnh báo chớp đỏ 2 giây rồi mới hiện thanh máu.
+/// </summary>
+public class BossHealthBarUI : MonoBehaviour
 {
-    public static event Action<float, float> OnBossHealthChanged;
-    public static event Action<string>       OnBossAppeared;
-    public static event Action               OnBossDefeated;
+    private const float WARNING_DURATION = 2f;
 
-    [SerializeField] private string bossName = "Boss";
-    [SerializeField] private int bossReward = 300;
+    [Header("Boss Bar")]
+    [SerializeField] private GameObject _bossBarRoot;
+    [SerializeField] private Image _bossHpFill;
+    [SerializeField] private TMP_Text _bossNameText;
 
-    public float CurrentHP => _currentHP;
-    public float MaxHP => maxHP;
+    [Header("Warning")]
+    [SerializeField] private GameObject _warningRoot;
+    [SerializeField] private TMP_Text _warningText;
 
-    protected override void Start()
+    private Coroutine _warningCoroutine;
+
+    private void Awake()
     {
-        base.Start();
-        OnBossAppeared?.Invoke(bossName);
+        HideAll();
     }
 
-    public override void TakeDamage(float damage)
+    private void OnEnable()
     {
-        _currentHP -= damage;
-        _currentHP = Mathf.Max(0f, _currentHP);
-        OnBossHealthChanged?.Invoke(_currentHP, maxHP);
-        if (_currentHP <= 0f) Die();
+        BossHealth.OnBossAppeared      += OnBossAppeared;
+        BossHealth.OnBossHealthChanged += UpdateBossBar;
+        BossHealth.OnBossDefeated      += OnBossDefeated;
     }
 
-    protected override void Die()
+    private void OnDisable()
     {
-        OnBossDefeated?.Invoke();
-        EconomyManager.Instance?.AddMoney(bossReward);
-        LevelManager.Instance?.RegisterBossDefeated();
-        Destroy(gameObject, 3f);
+        BossHealth.OnBossAppeared      -= OnBossAppeared;
+        BossHealth.OnBossHealthChanged -= UpdateBossBar;
+        BossHealth.OnBossDefeated      -= OnBossDefeated;
+
+        if (_warningCoroutine != null)
+        {
+            StopCoroutine(_warningCoroutine);
+            _warningCoroutine = null;
+        }
+    }
+
+    private void HideAll()
+    {
+        if (_bossBarRoot != null)
+            _bossBarRoot.SetActive(false);
+
+        if (_warningRoot != null)
+            _warningRoot.SetActive(false);
+    }
+
+    private void OnBossAppeared(string bossName)
+    {
+        if (_warningCoroutine != null)
+            StopCoroutine(_warningCoroutine);
+
+        _warningCoroutine = StartCoroutine(ShowWarningThenBar(bossName));
+    }
+
+    private IEnumerator ShowWarningThenBar(string bossName)
+    {
+        if (_bossBarRoot != null)
+            _bossBarRoot.SetActive(false);
+
+        if (_warningRoot != null)
+            _warningRoot.SetActive(true);
+
+        if (_warningText != null)
+            _warningText.text = $"{bossName.ToUpper()} INCOMING";
+
+        float elapsed = 0f;
+        while (elapsed < WARNING_DURATION)
+        {
+            if (_warningText != null)
+                _warningText.color = (Mathf.FloorToInt(elapsed * 4f) % 2 == 0)
+                    ? Color.red
+                    : Color.white;
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (_warningRoot != null)
+            _warningRoot.SetActive(false);
+
+        if (_bossBarRoot != null)
+            _bossBarRoot.SetActive(true);
+
+        if (_bossNameText != null)
+            _bossNameText.text = bossName;
+
+        _warningCoroutine = null;
+    }
+
+    private void UpdateBossBar(float current, float max)
+    {
+        if (_bossHpFill != null)
+            _bossHpFill.fillAmount = max > 0f ? current / max : 0f;
+    }
+
+    private void OnBossDefeated()
+    {
+        if (_warningCoroutine != null)
+        {
+            StopCoroutine(_warningCoroutine);
+            _warningCoroutine = null;
+        }
+
+        HideAll();
     }
 }
