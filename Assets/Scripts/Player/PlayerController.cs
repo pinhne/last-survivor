@@ -1,12 +1,25 @@
 using UnityEngine;
+using System.Collections;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float _moveSpeed = 6f;
+    [SerializeField] private float _moveSpeed = 6f;      // Walk speed
+    [SerializeField] private float _runSpeed = 9f;       // Hold Ctrl to run
     [SerializeField] private float _jumpHeight = 1.5f;
     [SerializeField] private float _gravity = -9.81f;
+
+    [Header("Run")]
+    [SerializeField] private KeyCode _runKey = KeyCode.LeftControl;
+    [SerializeField] private bool _allowRightControlRun = true;
+
+    [Header("Dodge")]
+    [SerializeField] private KeyCode _dodgeLeftKey = KeyCode.Q;
+    [SerializeField] private KeyCode _dodgeRightKey = KeyCode.E;
+    [SerializeField] private float _dodgeDistance = 4f;
+    [SerializeField] private float _dodgeDuration = 0.18f;
+    [SerializeField] private float _dodgeCooldown = 0.75f;
 
     [Header("Ground Check")]
     [SerializeField] private Transform _groundCheck;
@@ -32,6 +45,9 @@ public class PlayerController : MonoBehaviour
     private float _moveX;
     private float _moveZ;
 
+    private bool _isDodging;
+    private float _lastDodgeTime = -999f;
+
     private void Awake()
     {
         _controller = GetComponent<CharacterController>();
@@ -49,6 +65,7 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         HandleGroundCheck();
+        HandleDodgeInput();
         HandleMovement();
         HandleJump();
         ApplyGravity();
@@ -57,14 +74,20 @@ public class PlayerController : MonoBehaviour
 
     private void HandleGroundCheck()
     {
-        _isGrounded = Physics.CheckSphere(_groundCheck.position, _groundDistance, _groundMask);
+        if (_groundCheck == null)
+        {
+            _isGrounded = _controller.isGrounded;
+        }
+        else
+        {
+            _isGrounded = Physics.CheckSphere(_groundCheck.position, _groundDistance, _groundMask);
+        }
 
         // Giữ player dính sàn, tránh velocity.y bị âm tích lũy khi đứng yên
         if (_isGrounded && _velocity.y < 0)
         {
             _velocity.y = -2f;
         }
-
     }
 
     private void HandleMovement()
@@ -72,12 +95,80 @@ public class PlayerController : MonoBehaviour
         _moveX = Input.GetAxis("Horizontal"); // A/D
         _moveZ = Input.GetAxis("Vertical");   // W/S
 
+        // Khi đang dodge thì tạm khóa movement thường để cú né rõ ràng hơn
+        if (_isDodging)
+        {
+            _moveX = 0f;
+            _moveZ = 0f;
+            return;
+        }
+
         Vector3 move = transform.right * _moveX + transform.forward * _moveZ;
-        _controller.Move(move * _moveSpeed * Time.deltaTime);
+
+        // Chống chạy chéo nhanh hơn bình thường
+        if (move.magnitude > 1f)
+        {
+            move.Normalize();
+        }
+
+        float currentSpeed = IsRunKeyHeld() ? _runSpeed : _moveSpeed;
+        _controller.Move(move * currentSpeed * Time.deltaTime);
+    }
+
+    private bool IsRunKeyHeld()
+    {
+        if (Input.GetKey(_runKey))
+            return true;
+
+        return _allowRightControlRun && Input.GetKey(KeyCode.RightControl);
+    }
+
+    private void HandleDodgeInput()
+    {
+        if (_isDodging)
+            return;
+
+        if (!_isGrounded)
+            return;
+
+        if (Time.time < _lastDodgeTime + _dodgeCooldown)
+            return;
+
+        if (Input.GetKeyDown(_dodgeLeftKey))
+        {
+            StartCoroutine(Dodge(-transform.right));
+        }
+        else if (Input.GetKeyDown(_dodgeRightKey))
+        {
+            StartCoroutine(Dodge(transform.right));
+        }
+    }
+
+    private IEnumerator Dodge(Vector3 direction)
+    {
+        _isDodging = true;
+        _lastDodgeTime = Time.time;
+
+        float elapsedTime = 0f;
+        float dodgeSpeed = _dodgeDistance / _dodgeDuration;
+        Vector3 dodgeDirection = direction.normalized;
+
+        while (elapsedTime < _dodgeDuration)
+        {
+            _controller.Move(dodgeDirection * dodgeSpeed * Time.deltaTime);
+
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        _isDodging = false;
     }
 
     private void HandleJump()
     {
+        if (_isDodging)
+            return;
+
         if (Input.GetButtonDown("Jump") && _isGrounded)
         {
             // Công thức vật lý: v = sqrt(h * -2 * g)

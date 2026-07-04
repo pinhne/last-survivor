@@ -20,6 +20,14 @@ public class Gun : MonoBehaviour
     [SerializeField] private Transform _weaponVisualRoot;
     [SerializeField] private Animator _weaponAnimator;
 
+    [Header("Debug Logs")]
+    [SerializeField] private bool _logInit = true;
+    [SerializeField] private bool _logAmmoOnShot = true;
+    [SerializeField] private bool _logReload = true;
+    [SerializeField] private bool _logEmptyAmmo = true;
+    [SerializeField] private bool _logHitDebug = false;
+    [SerializeField] private bool _logBlockedReload = false;
+
     private Camera _cam;
     private PlayerCamera _playerCamera;
 
@@ -33,7 +41,6 @@ public class Gun : MonoBehaviour
     private Vector3 _visualDefaultLocalPosition;
     private Quaternion _visualDefaultLocalRotation;
     private bool _hasVisualPose = false;
-
 
     // ── Properties ─────────────────────────────────────────────────────────
     public WeaponData Data => _data;
@@ -82,7 +89,7 @@ public class Gun : MonoBehaviour
 
         if (_data == null)
         {
-            Debug.LogError("[Gun] Initialize failed: WeaponData is null");
+            Debug.LogError("[Gun] Initialize failed: WeaponData is null.");
             return;
         }
 
@@ -91,6 +98,7 @@ public class Gun : MonoBehaviour
 
         _visualKickPositionOffset = Vector3.zero;
         _visualKickEulerOffset = Vector3.zero;
+
         _currentAmmo = _data.maxAmmo;
         _reserveAmmo = _data.maxReserve;
         _isReloading = false;
@@ -99,7 +107,8 @@ public class Gun : MonoBehaviour
 
         OnAmmoChanged?.Invoke(_currentAmmo, _reserveAmmo);
 
-        Debug.Log($"[Gun] Init {_data.weaponName} | Ammo: {_currentAmmo}/{_reserveAmmo}");
+        if (_logInit)
+            Debug.Log($"[Gun][{GetWeaponName()}] Init | Ammo: {_currentAmmo}/{_data.maxAmmo} | Reserve: {_reserveAmmo}/{_data.maxReserve}");
     }
 
     private void ResolveReferences()
@@ -119,6 +128,7 @@ public class Gun : MonoBehaviour
         if (_gunBarrel == null)
         {
             Transform foundBarrel = transform.Find("GunBarrel");
+
             if (foundBarrel != null)
                 _gunBarrel = foundBarrel;
         }
@@ -130,7 +140,6 @@ public class Gun : MonoBehaviour
 
         _visualDefaultLocalPosition = _weaponVisualRoot.localPosition;
         _visualDefaultLocalRotation = _weaponVisualRoot.localRotation;
-
         _hasVisualPose = true;
     }
 
@@ -148,9 +157,17 @@ public class Gun : MonoBehaviour
         if (shootInput && Time.time >= _nextFireTime)
         {
             if (_currentAmmo > 0)
+            {
                 Shoot();
+            }
             else
+            {
                 PlayEmptySound();
+                _nextFireTime = Time.time + GetFireDelay();
+
+                if (_logEmptyAmmo)
+                    Debug.Log($"[Gun][{GetWeaponName()}] Empty | Ammo: {_currentAmmo}/{_data.maxAmmo} | Reserve: {_reserveAmmo}/{_data.maxReserve}");
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.R))
@@ -180,8 +197,19 @@ public class Gun : MonoBehaviour
     // ── Shoot ──────────────────────────────────────────────────────────────
     private void Shoot()
     {
+        if (_cam == null)
+        {
+            ResolveReferences();
+
+            if (_cam == null)
+            {
+                Debug.LogError($"[Gun][{GetWeaponName()}] Shoot failed: Camera.main not found.");
+                return;
+            }
+        }
+
         _currentAmmo--;
-        _nextFireTime = Time.time + (1f / _data.fireRate);
+        _nextFireTime = Time.time + GetFireDelay();
 
         SpawnMuzzleFlash();
         PlayShootSound();
@@ -192,10 +220,12 @@ public class Gun : MonoBehaviour
             ShootRaycast(_cam.transform.forward);
 
         ApplyWeaponFeedback();
-
         TrySetAnimatorTrigger("Fire");
 
         OnAmmoChanged?.Invoke(_currentAmmo, _reserveAmmo);
+
+        if (_logAmmoOnShot)
+            LogShotAmmo();
 
         if (_currentAmmo <= 0 && _reserveAmmo > 0)
             StartCoroutine(Reload());
@@ -219,24 +249,25 @@ public class Gun : MonoBehaviour
 
     private void ShootRaycast(Vector3 direction)
     {
-        if (_cam == null)
-        {
-            Debug.LogError("[Gun] Shoot failed: Camera.main not found.");
-            return;
-        }
-
         Ray ray = new Ray(_cam.transform.position, direction);
 
         if (!Physics.Raycast(ray, out RaycastHit hit, _data.range))
             return;
 
-        Debug.Log($"[Gun] Hit: {hit.collider.name}, Layer: {LayerMask.LayerToName(hit.collider.gameObject.layer)}");
+        if (_logHitDebug)
+        {
+            string layerName = LayerMask.LayerToName(hit.collider.gameObject.layer);
+            Debug.Log($"[Gun][{GetWeaponName()}][HitDebug] Hit: {hit.collider.name} | Layer: {layerName}");
+        }
 
         EnemyHealth enemyHealth = hit.collider.GetComponentInParent<EnemyHealth>();
 
         if (enemyHealth != null)
         {
             enemyHealth.TakeDamage(_data.damage);
+
+            if (_logHitDebug)
+                Debug.Log($"[Gun][{GetWeaponName()}][HitDebug] Enemy damaged: {enemyHealth.name} | Damage: {_data.damage}");
         }
     }
 
@@ -260,25 +291,31 @@ public class Gun : MonoBehaviour
     {
         if (_data == null)
         {
-            Debug.LogError("[Gun] Reload blocked: WeaponData is null");
+            Debug.LogError("[Gun] Reload blocked: WeaponData is null.");
             return;
         }
 
         if (_isReloading)
         {
-            Debug.Log("[Gun] Reload blocked: already reloading");
+            if (_logBlockedReload)
+                Debug.Log($"[Gun][{GetWeaponName()}] Reload blocked: already reloading.");
+
             return;
         }
 
         if (_currentAmmo >= _data.maxAmmo)
         {
-            Debug.Log("[Gun] Reload blocked: magazine already full");
+            if (_logBlockedReload)
+                Debug.Log($"[Gun][{GetWeaponName()}] Reload blocked: magazine already full | Ammo: {_currentAmmo}/{_data.maxAmmo} | Reserve: {_reserveAmmo}/{_data.maxReserve}");
+
             return;
         }
 
         if (_reserveAmmo <= 0)
         {
-            Debug.Log("[Gun] Reload blocked: no reserve ammo");
+            if (_logBlockedReload)
+                Debug.Log($"[Gun][{GetWeaponName()}] Reload blocked: no reserve ammo | Ammo: {_currentAmmo}/{_data.maxAmmo} | Reserve: {_reserveAmmo}/{_data.maxReserve}");
+
             return;
         }
 
@@ -295,7 +332,8 @@ public class Gun : MonoBehaviour
         TrySetAnimatorTrigger("Reload");
         AudioManager.Instance?.PlaySFX(_data.reloadSound);
 
-        Debug.Log($"[Gun] Reload start: {_data.weaponName}, wait {_data.reloadTime}s");
+        if (_logReload)
+            Debug.Log($"[Gun][{GetWeaponName()}] Reload start | Ammo: {_currentAmmo}/{_data.maxAmmo} | Reserve: {_reserveAmmo}/{_data.maxReserve} | Wait: {_data.reloadTime}s");
 
         yield return new WaitForSeconds(_data.reloadTime);
 
@@ -309,7 +347,8 @@ public class Gun : MonoBehaviour
 
         OnAmmoChanged?.Invoke(_currentAmmo, _reserveAmmo);
 
-        Debug.Log($"[Gun] Reload done: {_data.weaponName} | Ammo: {_currentAmmo}/{_reserveAmmo}");
+        if (_logReload)
+            Debug.Log($"[Gun][{GetWeaponName()}] Reload done | Loaded: {ammoToLoad} | Ammo: {_currentAmmo}/{_data.maxAmmo} | Reserve: {_reserveAmmo}/{_data.maxReserve}");
     }
 
     // ── Weapon Feedback ────────────────────────────────────────────────────
@@ -394,6 +433,37 @@ public class Gun : MonoBehaviour
         _reserveAmmo = _data.maxReserve;
 
         OnAmmoChanged?.Invoke(_currentAmmo, _reserveAmmo);
+
+        if (_logReload)
+            Debug.Log($"[Gun][{GetWeaponName()}] Ammo refilled | Ammo: {_currentAmmo}/{_data.maxAmmo} | Reserve: {_reserveAmmo}/{_data.maxReserve}");
+    }
+
+    // ── Debug Helpers ──────────────────────────────────────────────────────
+    private void LogShotAmmo()
+    {
+        if (_data.isShotgun)
+        {
+            Debug.Log($"[Gun][{GetWeaponName()}] Shot | Ammo: {_currentAmmo}/{_data.maxAmmo} | Reserve: {_reserveAmmo}/{_data.maxReserve} | Pellets: {_data.pelletCount}");
+            return;
+        }
+
+        Debug.Log($"[Gun][{GetWeaponName()}] Shot | Ammo: {_currentAmmo}/{_data.maxAmmo} | Reserve: {_reserveAmmo}/{_data.maxReserve}");
+    }
+
+    private string GetWeaponName()
+    {
+        if (_data == null || string.IsNullOrWhiteSpace(_data.weaponName))
+            return gameObject.name;
+
+        return _data.weaponName;
+    }
+
+    private float GetFireDelay()
+    {
+        if (_data == null || _data.fireRate <= 0f)
+            return 0.1f;
+
+        return 1f / _data.fireRate;
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────

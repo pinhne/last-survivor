@@ -1294,7 +1294,7 @@ Transform:
   m_GameObject: {fileID: 1191038965042982925}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.01, z: 0}
+  m_LocalPosition: {x: 0, y: 0.002, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1511,8 +1511,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   _moveSpeed: 6
+  _runSpeed: 9
   _jumpHeight: 2
   _gravity: -32
+  _runKey: 306
+  _allowRightControlRun: 1
+  _dodgeLeftKey: 113
+  _dodgeRightKey: 101
+  _dodgeDistance: 4
+  _dodgeDuration: 0.18
+  _dodgeCooldown: 0.75
   _groundCheck: {fileID: 7850019282752326184}
   _groundDistance: 0.4
   _groundMask:
@@ -2084,7 +2092,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3440468739606060334}
   - component: {fileID: 7237569284166511548}
-  - component: {fileID: 4318373234977762477}
   - component: {fileID: 4246123527640847923}
   - component: {fileID: 3297481447038518006}
   m_Layer: 0
@@ -2150,7 +2157,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 319
+    m_Bits: 2367
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -2162,14 +2169,6 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!81 &4318373234977762477
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6203113097271579073}
-  m_Enabled: 1
 --- !u!114 &4246123527640847923
 MonoBehaviour:
   m_ObjectHideFlags: 0
