@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c9a30f59c786e0419103480a35f6a95, type: 3}
+  m_Name: Level_01_Desert
+  m_EditorClassIdentifier: Assembly-CSharp::LevelData
+  levelIndex: 1
+  mapScene: Desert
+  waves:
+  - enemyPrefab: {fileID: 2880779935298703156, guid: bd82d7e47a9c43f4781546aa59622252, type: 3}
+    enemyCount: 5
+    spawnInterval: 1
+    delayBeforeWave: 1
+  eliteBossPrefab: {fileID: 18063328850413118, guid: 8d5633e5950f6d54788f7c9817bca1ae, type: 3}

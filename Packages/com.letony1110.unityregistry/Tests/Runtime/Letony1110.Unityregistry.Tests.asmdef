@@ -1,0 +1,11 @@
+{
+    "name": "Letony1110.Unityregistry.Tests",
+    "references": [
+        "Letony1110.Unityregistry"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": []
+}

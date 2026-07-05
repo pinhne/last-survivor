@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c9a30f59c786e0419103480a35f6a95, type: 3}
+  m_Name: Level_02_Warzone
+  m_EditorClassIdentifier: Assembly-CSharp::LevelData
+  levelIndex: 2
+  mapScene: Warzone
+  waves:
+  - enemyPrefab: {fileID: 2880779935298703156, guid: bd82d7e47a9c43f4781546aa59622252, type: 3}
+    enemyCount: 6
+    spawnInterval: 1.5
+    delayBeforeWave: 0
+  - enemyPrefab: {fileID: 2880779935298703156, guid: bd82d7e47a9c43f4781546aa59622252, type: 3}
+    enemyCount: 8
+    spawnInterval: 1
+    delayBeforeWave: 10
+  eliteBossPrefab: {fileID: 6330801388493474618, guid: d8f6a6ba0f8247f4893d6b3be3ae2bf8, type: 3}
