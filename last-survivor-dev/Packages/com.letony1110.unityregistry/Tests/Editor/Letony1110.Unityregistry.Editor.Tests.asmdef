@@ -1,0 +1,14 @@
+{
+    "name": "Letony1110.Unityregistry.Editor.Tests",
+    "references": [
+        "Letony1110.Unityregistry.Editor",
+        "Letony1110.Unityregistry"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
