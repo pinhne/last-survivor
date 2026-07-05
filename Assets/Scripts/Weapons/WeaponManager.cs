@@ -6,17 +6,7 @@ public class WeaponManager : MonoBehaviour
 {
     private Animator _playerAnimator;
     private static readonly int WeaponIndexHash = Animator.StringToHash("WeaponIndex");
-    void Awake()
-    {
-        // Lấy Animator từ HumanM_Model (con của Player)
-        _playerAnimator = GetComponentInChildren<Animator>();
-    }
 
-    // Trong hàm SwitchWeapon (hoặc UnlockWeapon) — thêm dòng này
-    private void SetWeaponAnimation(int index)
-    {
-        _playerAnimator?.SetInteger(WeaponIndexHash, index);
-    }
     // ── Static Events (Thu Hà lắng nghe để update weapon icon UI) ───────────
     public static event Action<WeaponData> OnWeaponChanged;
 
@@ -25,15 +15,22 @@ public class WeaponManager : MonoBehaviour
     [SerializeField] private List<WeaponData> _starterWeapons;
 
     // ── Private State ─────────────────────────────────────────────────────────
-    private List<WeaponData> _unlockedWeapons = new List<WeaponData>();
-    private List<Gun> _gunInstances = new List<Gun>();
+    private readonly List<WeaponData> _unlockedWeapons = new List<WeaponData>();
+    private readonly List<Gun> _gunInstances = new List<Gun>();
     private int _currentIndex = 0;
 
     // ── Properties ────────────────────────────────────────────────────────────
     public Gun CurrentGun => _gunInstances.Count > 0 ? _gunInstances[_currentIndex] : null;
     public WeaponData CurrentData => _unlockedWeapons.Count > 0 ? _unlockedWeapons[_currentIndex] : null;
+    public int UnlockedWeaponCount => _unlockedWeapons.Count;
 
     // ── Unity Lifecycle ───────────────────────────────────────────────────────
+    private void Awake()
+    {
+        // Lấy Animator từ HumanM_Model (con của Player)
+        _playerAnimator = GetComponentInChildren<Animator>();
+    }
+
     private void Start()
     {
         foreach (WeaponData weapon in _starterWeapons)
@@ -78,16 +75,28 @@ public class WeaponManager : MonoBehaviour
 
         _currentIndex = index;
         _gunInstances[_currentIndex].gameObject.SetActive(true);
+
         // Gun.OnEnable() tự broadcast OnAmmoChanged khi SetActive(true)
         // Không gọi Gun.OnAmmoChanged từ đây — C# không cho invoke event từ class ngoài
-        SetWeaponAnimation(index);
+        SetWeaponAnimation(_unlockedWeapons[_currentIndex].weaponAnimationIndex);
 
         OnWeaponChanged?.Invoke(_unlockedWeapons[_currentIndex]);
     }
 
-    // ── Unlock Weapon (Shop gọi) ──────────────────────────────────────────────
+    private void SetWeaponAnimation(int index)
+    {
+        _playerAnimator?.SetInteger(WeaponIndexHash, index);
+    }
+
+    // ── Unlock Weapon (Shop/UI gọi sau này) ───────────────────────────────────
     public void UnlockWeapon(WeaponData newWeapon)
     {
+        if (newWeapon == null)
+        {
+            Debug.LogWarning("[WeaponManager] Cannot unlock null weapon.");
+            return;
+        }
+
         if (_unlockedWeapons.Contains(newWeapon))
         {
             Debug.Log($"[WeaponManager] {newWeapon.weaponName} đã unlock rồi.");
@@ -99,9 +108,44 @@ public class WeaponManager : MonoBehaviour
         Debug.Log($"[WeaponManager] Đã unlock: {newWeapon.weaponName}");
     }
 
+    public bool IsWeaponUnlocked(WeaponData weaponData)
+    {
+        return weaponData != null && _unlockedWeapons.Contains(weaponData);
+    }
+
+    // ── Ammo Support cho shop giữa wave ───────────────────────────────────────
+    // Shop/UI sau này có thể gọi hàm này để mua đạn cho súng đang cầm.
+    public void RefillCurrentWeaponAmmo()
+    {
+        Gun gun = CurrentGun;
+        if (gun == null)
+        {
+            Debug.LogWarning("[WeaponManager] Không có súng hiện tại để refill ammo.");
+            return;
+        }
+
+        gun.RefillAmmo();
+    }
+
+    // Dùng nếu shop muốn mua full ammo cho toàn bộ súng đã sở hữu.
+    public void RefillAllUnlockedWeaponsAmmo()
+    {
+        foreach (Gun gun in _gunInstances)
+        {
+            if (gun != null)
+                gun.RefillAmmo();
+        }
+    }
+
     // ── Private Helpers ───────────────────────────────────────────────────────
     private void AddWeapon(WeaponData weaponData)
     {
+        if (weaponData == null)
+        {
+            Debug.LogWarning("[WeaponManager] WeaponData is null.");
+            return;
+        }
+
         if (weaponData.weaponPrefab == null)
         {
             Debug.LogWarning($"[WeaponManager] {weaponData.weaponName} chưa có weaponPrefab!");
@@ -119,7 +163,7 @@ public class WeaponManager : MonoBehaviour
         if (gun == null)
             gun = weaponObj.AddComponent<Gun>();
 
-        gun.Initialize(weaponData);   // ← THÊM DÒNG NÀY
+        gun.Initialize(weaponData);
 
         weaponObj.SetActive(false);
 

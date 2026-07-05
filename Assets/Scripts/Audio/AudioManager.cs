@@ -19,8 +19,13 @@ public class AudioManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
+    public void PlaySFX(AudioClip clip)
+    {
+        if (clip == null) return;
+        AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position);
+    }
 
-    public void PlaySFX(AudioClip clip) { /* Vy implement */ }
+
     public void PlaySFX(AudioClip clip, float volume) { /* Vy implement */ }
     public void PlayMusic(AudioClip clip, bool loop = true) { /* Vy implement */ }
     public void StopMusic() { /* Vy implement */ }

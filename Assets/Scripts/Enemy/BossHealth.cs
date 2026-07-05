@@ -1,118 +1,136 @@
-using System.Collections;
-using TMPro;
+using System;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.AI;
 
-/// <summary>
-/// Thanh máu Boss — ẩn mặc định, hiện khi OnBossAppeared,
-/// cảnh báo chớp đỏ 2 giây rồi mới hiện thanh máu.
-/// </summary>
-public class BossHealthBarUI : MonoBehaviour
+public class BossHealth : EnemyHealth
 {
-    private const float WARNING_DURATION = 2f;
+    public static event Action<float, float> OnBossHealthChanged;
+    public static event Action<string> OnBossAppeared;
+    public static event Action OnBossDefeated;
 
-    [Header("Boss Bar")]
-    [SerializeField] private GameObject _bossBarRoot;
-    [SerializeField] private Image _bossHpFill;
-    [SerializeField] private TMP_Text _bossNameText;
+    [Header("Boss Info")]
+    [SerializeField] private string bossName = "Boss";
+    [SerializeField] private int bossReward = 300;
 
-    [Header("Warning")]
-    [SerializeField] private GameObject _warningRoot;
-    [SerializeField] private TMP_Text _warningText;
+    [Header("Death")]
+    [SerializeField] private Animator bossAnimator;
+    [SerializeField] private string deathTriggerName = "Die";
+    [SerializeField] private float destroyAfterDeathDelay = 10f;
 
-    private Coroutine _warningCoroutine;
+    private bool _isDead = false;
 
-    private void Awake()
+    public float CurrentHP => _currentHP;
+    public float MaxHP => maxHP;
+
+    protected override void Start()
     {
-        HideAll();
+        base.Start();
+
+        if (bossAnimator == null)
+            bossAnimator = GetComponentInChildren<Animator>();
+
+        OnBossAppeared?.Invoke(bossName);
+        OnBossHealthChanged?.Invoke(_currentHP, maxHP);
     }
 
-    private void OnEnable()
+    public override void TakeDamage(float damage)
     {
-        BossHealth.OnBossAppeared      += OnBossAppeared;
-        BossHealth.OnBossHealthChanged += UpdateBossBar;
-        BossHealth.OnBossDefeated      += OnBossDefeated;
+        if (_isDead) return;
+
+        _currentHP -= damage;
+        _currentHP = Mathf.Max(0f, _currentHP);
+
+        OnBossHealthChanged?.Invoke(_currentHP, maxHP);
+
+        if (_currentHP <= 0f)
+            Die();
     }
 
-    private void OnDisable()
+    protected override void Die()
     {
-        BossHealth.OnBossAppeared      -= OnBossAppeared;
-        BossHealth.OnBossHealthChanged -= UpdateBossBar;
-        BossHealth.OnBossDefeated      -= OnBossDefeated;
+        if (_isDead) return;
+        _isDead = true;
 
-        if (_warningCoroutine != null)
+        Debug.Log($"[BossHealth] Boss defeated: {bossName}");
+
+        StopBossAI();
+        StopBossMovement();
+        DisableBossCollider();
+        PlayDeathAnimation();
+
+        OnBossDefeated?.Invoke();
+        EconomyManager.Instance?.AddMoney(bossReward);
+        LevelManager.Instance?.RegisterBossDefeated();
+
+        Destroy(gameObject, destroyAfterDeathDelay);
+    }
+
+    private void StopBossAI()
+    {
+        SandstormBrute sandstormBrute = GetComponent<SandstormBrute>();
+        if (sandstormBrute != null)
         {
-            StopCoroutine(_warningCoroutine);
-            _warningCoroutine = null;
+            sandstormBrute.StopAllCoroutines();
+            sandstormBrute.enabled = false;
+        }
+
+        EliteBossBase eliteBossBase = GetComponent<EliteBossBase>();
+        if (eliteBossBase != null)
+        {
+            eliteBossBase.StopAllCoroutines();
+            eliteBossBase.enabled = false;
         }
     }
 
-    private void HideAll()
+    private void StopBossMovement()
     {
-        if (_bossBarRoot != null)
-            _bossBarRoot.SetActive(false);
+        NavMeshAgent agent = GetComponent<NavMeshAgent>();
+        if (agent == null) return;
 
-        if (_warningRoot != null)
-            _warningRoot.SetActive(false);
-    }
-
-    private void OnBossAppeared(string bossName)
-    {
-        if (_warningCoroutine != null)
-            StopCoroutine(_warningCoroutine);
-
-        _warningCoroutine = StartCoroutine(ShowWarningThenBar(bossName));
-    }
-
-    private IEnumerator ShowWarningThenBar(string bossName)
-    {
-        if (_bossBarRoot != null)
-            _bossBarRoot.SetActive(false);
-
-        if (_warningRoot != null)
-            _warningRoot.SetActive(true);
-
-        if (_warningText != null)
-            _warningText.text = $"{bossName.ToUpper()} INCOMING";
-
-        float elapsed = 0f;
-        while (elapsed < WARNING_DURATION)
+        if (agent.enabled && agent.isOnNavMesh)
         {
-            if (_warningText != null)
-                _warningText.color = (Mathf.FloorToInt(elapsed * 4f) % 2 == 0)
-                    ? Color.red
-                    : Color.white;
-
-            elapsed += Time.unscaledDeltaTime;
-            yield return null;
+            agent.isStopped = true;
+            agent.ResetPath();
         }
 
-        if (_warningRoot != null)
-            _warningRoot.SetActive(false);
-
-        if (_bossBarRoot != null)
-            _bossBarRoot.SetActive(true);
-
-        if (_bossNameText != null)
-            _bossNameText.text = bossName;
-
-        _warningCoroutine = null;
+        agent.enabled = false;
     }
 
-    private void UpdateBossBar(float current, float max)
+    private void DisableBossCollider()
     {
-        if (_bossHpFill != null)
-            _bossHpFill.fillAmount = max > 0f ? current / max : 0f;
+        Collider bossCollider = GetComponent<Collider>();
+        if (bossCollider != null)
+            bossCollider.enabled = false;
     }
 
-    private void OnBossDefeated()
+    private void PlayDeathAnimation()
     {
-        if (_warningCoroutine != null)
+        if (bossAnimator == null)
         {
-            StopCoroutine(_warningCoroutine);
-            _warningCoroutine = null;
+            Debug.LogWarning("[BossHealth] Death animation skipped: bossAnimator is null.");
+            return;
         }
 
-        HideAll();
+        if (!HasAnimatorParameter(deathTriggerName, AnimatorControllerParameterType.Trigger))
+        {
+            Debug.LogWarning($"[BossHealth] Death animation skipped: Animator has no trigger '{deathTriggerName}'.");
+            return;
+        }
+
+        bossAnimator.SetTrigger(deathTriggerName);
+    }
+
+    private bool HasAnimatorParameter(string parameterName, AnimatorControllerParameterType type)
+    {
+        if (bossAnimator == null) return false;
+        if (bossAnimator.runtimeAnimatorController == null) return false;
+
+        foreach (AnimatorControllerParameter parameter in bossAnimator.parameters)
+        {
+            if (parameter.name == parameterName && parameter.type == type)
+                return true;
+        }
+
+        return false;
     }
 }
