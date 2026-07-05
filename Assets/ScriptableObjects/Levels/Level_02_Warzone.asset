@@ -15,20 +15,12 @@ MonoBehaviour:
   levelIndex: 2
   mapScene: Warzone
   waves:
-  - enemyPrefab: {fileID: 0}
+  - enemyPrefab: {fileID: 2880779935298703156, guid: bd82d7e47a9c43f4781546aa59622252, type: 3}
     enemyCount: 6
     spawnInterval: 1.5
     delayBeforeWave: 0
-  - enemyPrefab: {fileID: 0}
+  - enemyPrefab: {fileID: 2880779935298703156, guid: bd82d7e47a9c43f4781546aa59622252, type: 3}
     enemyCount: 8
     spawnInterval: 1
     delayBeforeWave: 10
-  - enemyPrefab: {fileID: 0}
-    enemyCount: 4
-    spawnInterval: 2
-    delayBeforeWave: 10
-  - enemyPrefab: {fileID: 0}
-    enemyCount: 5
-    spawnInterval: 1
-    delayBeforeWave: 8
-  eliteBossPrefab: {fileID: 0}
+  eliteBossPrefab: {fileID: 6330801388493474618, guid: d8f6a6ba0f8247f4893d6b3be3ae2bf8, type: 3}

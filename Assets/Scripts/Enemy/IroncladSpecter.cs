@@ -13,8 +13,13 @@ public class IroncladSpecter : EliteBossBase
     {
         while (true)
         {
-            // Di chuyển đến player
-            _navAgent.SetDestination(_playerTransform.position);
+            if (_playerTransform == null || _navAgent == null)
+                yield break;
+
+            // Di chuyển đến player nếu agent còn hợp lệ.
+            if (_navAgent.enabled && _navAgent.isOnNavMesh)
+                _navAgent.SetDestination(_playerTransform.position);
+
             yield return new WaitForSeconds(2f);
 
             float dist = Vector3.Distance(transform.position, _playerTransform.position);
@@ -22,7 +27,7 @@ public class IroncladSpecter : EliteBossBase
             if (dist <= shootRange)
                 ShootAtPlayer();
 
-            // Triệu hồi quái khi HP <= 50%
+            // Triệu hồi quái khi HP <= 50%.
             if (!_hasTriggeredSummon && _bossHealth != null)
             {
                 if (_bossHealth.CurrentHP <= _bossHealth.MaxHP * 0.5f)
@@ -35,13 +40,20 @@ public class IroncladSpecter : EliteBossBase
 
     private void ShootAtPlayer()
     {
-        transform.LookAt(_playerTransform);
-        Vector3 dir = (_playerTransform.position - transform.position).normalized;
+        if (_playerTransform == null) return;
 
-        if (Physics.Raycast(transform.position + Vector3.up, dir, out RaycastHit hit, shootRange))
+        Vector3 targetPosition = _playerTransform.position;
+        targetPosition.y = transform.position.y;
+        transform.LookAt(targetPosition);
+
+        Vector3 rayOrigin = transform.position + Vector3.up;
+        Vector3 direction = (_playerTransform.position + Vector3.up - rayOrigin).normalized;
+
+        if (Physics.Raycast(rayOrigin, direction, out RaycastHit hit, shootRange))
         {
-            if (hit.collider.CompareTag("Player"))
-                _playerTransform.GetComponent<PlayerHealth>()?.TakeDamage(damage);
+            PlayerHealth playerHealth = hit.collider.GetComponentInParent<PlayerHealth>();
+            if (playerHealth != null)
+                playerHealth.TakeDamage(damage);
         }
     }
 
@@ -50,10 +62,14 @@ public class IroncladSpecter : EliteBossBase
         if (_hasTriggeredSummon) return;
         _hasTriggeredSummon = true;
 
+        if (summonPrefabs == null || summonPrefabs.Length == 0)
+        {
+            Debug.LogWarning("[IroncladSpecter] Không có summonPrefabs để triệu hồi.");
+            return;
+        }
+
         for (int i = 0; i < 3; i++)
         {
-            if (summonPrefabs == null || summonPrefabs.Length == 0) break;
-
             Vector3 offset = Random.insideUnitSphere * 4f;
             offset.y = 0;
             int idx = Random.Range(0, summonPrefabs.Length);
@@ -66,5 +82,7 @@ public class IroncladSpecter : EliteBossBase
 
             LevelManager.Instance?.RegisterEnemySpawned();
         }
+
+        Debug.Log("[IroncladSpecter] Summoned 3 minions.");
     }
 }
