@@ -19,4 +19,16 @@ MonoBehaviour:
     enemyCount: 5
     spawnInterval: 1
     delayBeforeWave: 1
+  - enemyPrefab: {fileID: 2880779935298703156, guid: bd82d7e47a9c43f4781546aa59622252, type: 3}
+    enemyCount: 5
+    spawnInterval: 1
+    delayBeforeWave: 1
+  - enemyPrefab: {fileID: 2880779935298703156, guid: bd82d7e47a9c43f4781546aa59622252, type: 3}
+    enemyCount: 5
+    spawnInterval: 1
+    delayBeforeWave: 1
+  - enemyPrefab: {fileID: 2880779935298703156, guid: bd82d7e47a9c43f4781546aa59622252, type: 3}
+    enemyCount: 5
+    spawnInterval: 1
+    delayBeforeWave: 1
   eliteBossPrefab: {fileID: 18063328850413118, guid: 8d5633e5950f6d54788f7c9817bca1ae, type: 3}

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class SpawnManager : MonoBehaviour
 {
@@ -190,39 +191,58 @@ public class SpawnManager : MonoBehaviour
 
     private void SpawnEnemy(GameObject prefab)
     {
-        if (prefab == null)
-        {
-            Debug.LogWarning("[SpawnManager] Enemy prefab is null. Bỏ qua enemy này.");
-            return;
-        }
-
         Transform spawnPoint = GetValidSpawnPoint();
         if (spawnPoint == null) return;
 
-        Instantiate(prefab, spawnPoint.position, spawnPoint.rotation);
-        _totalSpawnedThisLevel++;
+        Vector3 spawnPosition = spawnPoint.position;
 
-        LevelManager.Instance?.RegisterEnemySpawned();
+        if (NavMesh.SamplePosition(spawnPosition, out NavMeshHit hit, 5f, NavMesh.AllAreas))
+        {
+            spawnPosition = hit.position;
+        }
+        else
+        {
+            Debug.LogWarning($"[SpawnManager] Không tìm thấy NavMesh gần {spawnPoint.name}. Enemy có thể bị lỗi.");
+        }
+
+        GameObject enemy = Instantiate(prefab, spawnPosition, spawnPoint.rotation);
+
+        NavMeshAgent agent = enemy.GetComponent<NavMeshAgent>();
+        if (agent != null && NavMesh.SamplePosition(spawnPosition, out NavMeshHit agentHit, 5f, NavMesh.AllAreas))
+        {
+            agent.Warp(agentHit.position);
+        }
+
+        LevelManager.Instance.RegisterEnemySpawned();
     }
 
     public void SpawnBoss()
     {
-        if (_levelData == null || _levelData.eliteBossPrefab == null)
-        {
-            Debug.LogError("[SpawnManager] Không có eliteBossPrefab trong LevelData.");
-            return;
-        }
-
-        // Spawn Boss tại BossArena do map đặt tag.
         GameObject arena = GameObject.FindGameObjectWithTag("BossArena");
         if (arena == null)
         {
-            Debug.LogError("[SpawnManager] Không tìm thấy BossArena! Kiểm tra object BossArena có tag BossArena.");
+            Debug.LogError("Không tìm thấy BossArena!");
             return;
         }
 
-        Instantiate(_levelData.eliteBossPrefab, arena.transform.position, Quaternion.identity);
-        Debug.Log($"[SpawnManager] Boss spawned: {_levelData.eliteBossPrefab.name}");
+        Vector3 spawnPosition = arena.transform.position;
+
+        if (NavMesh.SamplePosition(spawnPosition, out NavMeshHit hit, 8f, NavMesh.AllAreas))
+        {
+            spawnPosition = hit.position;
+        }
+        else
+        {
+            Debug.LogWarning("[SpawnManager] Không tìm thấy NavMesh gần BossArena. Boss có thể không di chuyển được.");
+        }
+
+        GameObject boss = Instantiate(_levelData.eliteBossPrefab, spawnPosition, Quaternion.identity);
+
+        NavMeshAgent agent = boss.GetComponent<NavMeshAgent>();
+        if (agent != null && NavMesh.SamplePosition(spawnPosition, out NavMeshHit bossHit, 8f, NavMesh.AllAreas))
+        {
+            agent.Warp(bossHit.position);
+        }
     }
 
     public void StopAllSpawning()

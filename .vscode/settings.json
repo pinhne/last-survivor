@@ -67,6 +67,6 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "last-survivor-feature-Binh.slnx",
+    "dotnet.defaultSolution": "LastSurvivor.slnx",
     "dotnet.enableWorkspaceBasedDevelopment": false
 }
