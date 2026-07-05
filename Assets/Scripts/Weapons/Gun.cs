@@ -28,6 +28,9 @@ public class Gun : MonoBehaviour
     [SerializeField] private bool _logHitDebug = false;
     [SerializeField] private bool _logBlockedReload = false;
 
+    [Header("Muzzle Flash")]
+    [SerializeField] private float _muzzleFlashScale = 0.25f;
+    [SerializeField] private float _muzzleFlashDestroyDelay = 0.08f;
     private Camera _cam;
     private PlayerCamera _playerCamera;
 
@@ -235,11 +238,15 @@ public class Gun : MonoBehaviour
     {
         if (_muzzleFlashPrefab == null || _gunBarrel == null) return;
 
-        Instantiate(
+        GameObject flash = Instantiate(
             _muzzleFlashPrefab,
             _gunBarrel.position,
             _gunBarrel.rotation
         );
+
+        flash.transform.localScale = Vector3.one * _muzzleFlashScale;
+
+        Destroy(flash, _muzzleFlashDestroyDelay);
     }
 
     private void PlayShootSound()

@@ -17,8 +17,6 @@ public class BossHealth : EnemyHealth
     [SerializeField] private string deathTriggerName = "Die";
     [SerializeField] private float destroyAfterDeathDelay = 10f;
 
-    private bool _isDead = false;
-
     public float CurrentHP => _currentHP;
     public float MaxHP => maxHP;
 
@@ -57,6 +55,7 @@ public class BossHealth : EnemyHealth
         StopBossMovement();
         DisableBossCollider();
         PlayDeathAnimation();
+        SpawnDeathEffect();
 
         OnBossDefeated?.Invoke();
         EconomyManager.Instance?.AddMoney(bossReward);

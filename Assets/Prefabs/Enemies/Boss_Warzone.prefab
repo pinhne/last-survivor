@@ -67,6 +67,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BossHealth
   maxHP: 900
   reward: 15
+  deathEffectPrefab: {fileID: 100002, guid: 6ecf76dc4f268d340b2666896a954bcc, type: 3}
+  deathEffectOffset: {x: 0, y: 0.5, z: 0}
+  deathEffectDestroyDelay: 5
   bossName: Ironclad Specter
   bossReward: 500
   bossAnimator: {fileID: 345645573349938374}

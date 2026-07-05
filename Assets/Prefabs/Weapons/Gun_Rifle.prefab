@@ -79,7 +79,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Gun
   _data: {fileID: 11400000, guid: 61758d894acbb1946ba4ce0ab6b775ed, type: 2}
   _gunBarrel: {fileID: 1768027188115990880}
-  _muzzleFlashPrefab: {fileID: 0}
+  _muzzleFlashPrefab: {fileID: 100000, guid: 03a4a1935a9f4454c861dfa0aa6df562, type: 3}
+  _weaponVisualRoot: {fileID: 0}
+  _weaponAnimator: {fileID: 0}
+  _logInit: 1
+  _logAmmoOnShot: 1
+  _logReload: 1
+  _logEmptyAmmo: 1
+  _logHitDebug: 0
+  _logBlockedReload: 0
+  _muzzleFlashScale: 0.85
+  _muzzleFlashDestroyDelay: 0.11
 --- !u!1001 &9216030987313353196
 PrefabInstance:
   m_ObjectHideFlags: 0

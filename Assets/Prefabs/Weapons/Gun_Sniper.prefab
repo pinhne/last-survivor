@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 862974845819124842}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.075, z: 0.88}
+  m_LocalPosition: {x: 0, y: 0.064, z: 0.944}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -111,7 +111,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Gun
   _data: {fileID: 11400000, guid: c5757d095d98ba546a3b124c0a66fa73, type: 2}
   _gunBarrel: {fileID: 3066120918692267490}
-  _muzzleFlashPrefab: {fileID: 0}
+  _muzzleFlashPrefab: {fileID: 100000, guid: 03a4a1935a9f4454c861dfa0aa6df562, type: 3}
+  _weaponVisualRoot: {fileID: 0}
+  _weaponAnimator: {fileID: 0}
+  _logInit: 1
+  _logAmmoOnShot: 1
+  _logReload: 1
+  _logEmptyAmmo: 1
+  _logHitDebug: 0
+  _logBlockedReload: 0
+  _muzzleFlashScale: 1
+  _muzzleFlashDestroyDelay: 0.12
 --- !u!1001 &7259586744138041063
 PrefabInstance:
   m_ObjectHideFlags: 0

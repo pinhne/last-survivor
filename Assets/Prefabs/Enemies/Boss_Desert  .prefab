@@ -65,6 +65,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BossHealth
   maxHP: 600
   reward: 15
+  deathEffectPrefab: {fileID: 4351819192275421776, guid: 0f99014bbb7ecf84d858bb56b2f271e1, type: 3}
+  deathEffectOffset: {x: 0, y: 0.5, z: 0}
+  deathEffectDestroyDelay: 5
   bossName: Sandstorm Brute
   bossReward: 300
   bossAnimator: {fileID: 4412183592824405393}

@@ -44,6 +44,6 @@ MonoBehaviour:
   aimMoveSpeed: 12
   weaponAnimationIndex: 1
   weaponPrefab: {fileID: 3510412251175760290, guid: 6e5300cf67078ca48baf9671af625aa9, type: 3}
-  shootSound: {fileID: 0}
-  reloadSound: {fileID: 0}
-  emptySound: {fileID: 0}
+  shootSound: {fileID: 8300000, guid: 208f839c94fa47e419801709860681d6, type: 3}
+  reloadSound: {fileID: 8300000, guid: a53253bb2eba5bd43839983cd9b7d7fb, type: 3}
+  emptySound: {fileID: 8300000, guid: e1512aa18b951dc498aaceec3d8757a5, type: 3}

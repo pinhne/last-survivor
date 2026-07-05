@@ -73,6 +73,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth
   maxHP: 60
   reward: 15
+  deathEffectPrefab: {fileID: 100000, guid: 8fd015f45a4199b46b12ba97a1f574c4, type: 3}
+  deathEffectOffset: {x: 0, y: 0.5, z: 0}
+  deathEffectDestroyDelay: 5
 --- !u!114 &3452131182902862115
 MonoBehaviour:
   m_ObjectHideFlags: 0
