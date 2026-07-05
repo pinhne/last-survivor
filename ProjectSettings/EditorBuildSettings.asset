@@ -4,5 +4,21 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
-  m_configObjects: {}
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: 73d6be467cf37b34ea62d35870b7b3f4
+  - enabled: 1
+    path: Assets/Scenes/Desert.unity
+    guid: d352d2ac92aaea94e9c7a67c9c95d636
+  - enabled: 1
+    path: Assets/Scenes/Warzone.unity
+    guid: 110dc350671a17c44940f17dbd4391be
+  - enabled: 1
+    path: Assets/Scenes/Victory.unity
+    guid: 45cc00b1179b92a4d992ccaee21db83d
+  - enabled: 1
+    path: Assets/Scenes/GameOver.unity
+    guid: 7459b483b248f7546919d42f35e7904a
+  m_configObjects:
+    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
