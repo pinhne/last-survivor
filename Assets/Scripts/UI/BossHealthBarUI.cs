@@ -10,17 +10,20 @@ using UnityEngine.UI;
 public class BossHealthBarUI : MonoBehaviour
 {
     private const float WARNING_DURATION = 2f;
+    private const float DEFEATED_DURATION = 3f;
 
     [Header("Boss Bar")]
     [SerializeField] private GameObject _bossBarRoot;
     [SerializeField] private Image _bossHpFill;
     [SerializeField] private TMP_Text _bossNameText;
 
-    [Header("Warning")]
+    [Header("Warning / Defeated")]
     [SerializeField] private GameObject _warningRoot;
     [SerializeField] private TMP_Text _warningText;
 
     private Coroutine _warningCoroutine;
+    private Coroutine _defeatedCoroutine;
+    private string _lastBossName;
 
     private void Awake()
     {
@@ -45,6 +48,12 @@ public class BossHealthBarUI : MonoBehaviour
             StopCoroutine(_warningCoroutine);
             _warningCoroutine = null;
         }
+
+        if (_defeatedCoroutine != null)
+        {
+            StopCoroutine(_defeatedCoroutine);
+            _defeatedCoroutine = null;
+        }
     }
 
     private void HideAll()
@@ -58,6 +67,14 @@ public class BossHealthBarUI : MonoBehaviour
 
     private void OnBossAppeared(string bossName)
     {
+        _lastBossName = bossName;
+
+        if (_defeatedCoroutine != null)
+        {
+            StopCoroutine(_defeatedCoroutine);
+            _defeatedCoroutine = null;
+        }
+
         if (_warningCoroutine != null)
             StopCoroutine(_warningCoroutine);
 
@@ -113,6 +130,51 @@ public class BossHealthBarUI : MonoBehaviour
             _warningCoroutine = null;
         }
 
-        HideAll();
+        if (_bossBarRoot != null)
+            _bossBarRoot.SetActive(false);
+
+        if (_defeatedCoroutine != null)
+            StopCoroutine(_defeatedCoroutine);
+
+        _defeatedCoroutine = StartCoroutine(ShowDefeatedBanner());
+    }
+
+    private IEnumerator ShowDefeatedBanner()
+    {
+        if (_warningRoot != null)
+            _warningRoot.SetActive(true);
+
+        string bossLabel = string.IsNullOrWhiteSpace(_lastBossName)
+            ? "BOSS"
+            : _lastBossName.ToUpper();
+
+        if (_warningText != null)
+        {
+            _warningText.text = $"ĐÃ TIÊU DIỆT\n{bossLabel}";
+            _warningText.fontSize = 44f;
+            _warningText.alignment = TextAlignmentOptions.Center;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < DEFEATED_DURATION)
+        {
+            if (_warningText != null)
+            {
+                _warningText.color = (Mathf.FloorToInt(elapsed * 3f) % 2 == 0)
+                    ? UITheme.VictoryGreen
+                    : Color.white;
+            }
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (_warningRoot != null)
+            _warningRoot.SetActive(false);
+
+        if (_warningText != null)
+            _warningText.fontSize = 44f;
+
+        _defeatedCoroutine = null;
     }
 }

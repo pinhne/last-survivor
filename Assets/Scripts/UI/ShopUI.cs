@@ -3,17 +3,11 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Shop UI — mở bằng phím B hoặc nút Shop.
-/// Pause game khi mở (Time.timeScale = 0), gọi EconomyManager để mua.
+/// Shop phím B giữa combat (mode phụ) — pause Time.timeScale.
+/// Shop chính giữa wave: IntermissionShopUI (RULE §7).
 /// </summary>
 public class ShopUI : MonoBehaviour
 {
-    public const int PRICE_HP_POTION       = 80;
-    public const int PRICE_SHIELD_RECHARGE = 120;
-    public const int PRICE_RIFLE           = 300;
-    public const int PRICE_SHOTGUN         = 450;
-    public const int PRICE_SNIPER          = 600;
-
     [Header("Panel")]
     [SerializeField] private GameObject _shopPanel;
     [SerializeField] private TMP_Text _errorText;
@@ -27,26 +21,51 @@ public class ShopUI : MonoBehaviour
     [SerializeField] private Button _btnSniper;
     [SerializeField] private Button _btnClose;
 
+    [Header("Weapon Data")]
+    [SerializeField] private WeaponData _rifleData;
+    [SerializeField] private WeaponData _shotgunData;
+    [SerializeField] private WeaponData _sniperData;
+
     private bool _isOpen;
+    private bool _isIntermission;
+    private Coroutine _feedbackRoutine;
 
     private void Awake()
     {
+        ResolveWeaponRefs();
+
         if (_shopPanel != null)
             _shopPanel.SetActive(false);
 
-        if (_errorText != null)
-            _errorText.gameObject.SetActive(false);
+        HideFeedback();
 
-        BindButton(_btnHpPotion,  PRICE_HP_POTION,       OnBuyHpPotion);
-        BindButton(_btnShield,    PRICE_SHIELD_RECHARGE, OnBuyShield);
-        BindButton(_btnRifle,     PRICE_RIFLE,           OnBuyRifle);
-        BindButton(_btnShotgun,   PRICE_SHOTGUN,         OnBuyShotgun);
-        BindButton(_btnSniper,    PRICE_SNIPER,          OnBuySniper);
+        if (_btnHpPotion != null) _btnHpPotion.onClick.AddListener(OnBuyHp);
+        if (_btnShield != null) _btnShield.onClick.AddListener(OnBuyShield);
+        if (_btnRifle != null) _btnRifle.onClick.AddListener(OnBuyRifle);
+        if (_btnShotgun != null) _btnShotgun.onClick.AddListener(OnBuyShotgun);
+        if (_btnSniper != null) _btnSniper.onClick.AddListener(OnBuySniper);
 
         if (_btnClose != null)
             _btnClose.onClick.AddListener(CloseShop);
 
         BindShopToggleButton();
+    }
+
+    private void OnEnable()
+    {
+        LevelManager.OnWaveIntermissionStateChanged += OnIntermissionStateChanged;
+    }
+
+    private void OnDisable()
+    {
+        LevelManager.OnWaveIntermissionStateChanged -= OnIntermissionStateChanged;
+    }
+
+    private void OnIntermissionStateChanged(bool isIntermission)
+    {
+        _isIntermission = isIntermission;
+        if (isIntermission && _isOpen)
+            CloseShop();
     }
 
     private void BindShopToggleButton()
@@ -70,12 +89,15 @@ public class ShopUI : MonoBehaviour
 
     public void ToggleShop()
     {
+        if (_isIntermission) return;
         if (_isOpen) CloseShop();
         else OpenShop();
     }
 
     private void Update()
     {
+        if (_isIntermission) return;
+
         if (Input.GetKeyDown(KeyCode.B))
         {
             if (_isOpen) CloseShop();
@@ -83,57 +105,50 @@ public class ShopUI : MonoBehaviour
         }
     }
 
-    private void BindButton(Button button, int price, System.Action onSuccess)
+    private void OnBuyHp()
     {
-        if (button == null) return;
-        button.onClick.AddListener(() => TryPurchase(price, onSuccess));
-    }
-
-    private void TryPurchase(int price, System.Action onSuccess)
-    {
-        if (EconomyManager.Instance == null)
-        {
-            ShowError("Hệ thống kinh tế chưa sẵn sàng.");
-            return;
-        }
-
-        if (!EconomyManager.Instance.SpendMoney(price))
-        {
-            ShowError("Không đủ tiền");
-            return;
-        }
-
-        HideError();
-        onSuccess?.Invoke();
-    }
-
-    private void OnBuyHpPotion()
-    {
-        ShopManager.Instance?.PurchaseHpPotion();
+        if (UIShopPurchase.PurchaseHpPotion(out var err))
+            ShowSuccess("Mua HP Potion thành công!");
+        else
+            ShowError(err);
     }
 
     private void OnBuyShield()
     {
-        ShopManager.Instance?.PurchaseShieldRecharge();
+        if (UIShopPurchase.PurchaseShieldRecharge(out var err))
+            ShowSuccess("Mua Shield thành công!");
+        else
+            ShowError(err);
     }
 
     private void OnBuyRifle()
     {
-        ShopManager.Instance?.PurchaseRifle();
+        if (UIShopPurchase.PurchaseWeapon(_rifleData, UIShopConstants.PriceRifle, out var err))
+            ShowSuccess("Mua Rifle thành công!");
+        else
+            ShowError(err);
     }
 
     private void OnBuyShotgun()
     {
-        ShopManager.Instance?.PurchaseShotgun();
+        if (UIShopPurchase.PurchaseWeapon(_shotgunData, UIShopConstants.PriceShotgun, out var err))
+            ShowSuccess("Mua Shotgun thành công!");
+        else
+            ShowError(err);
     }
 
     private void OnBuySniper()
     {
-        ShopManager.Instance?.PurchaseSniper();
+        if (UIShopPurchase.PurchaseWeapon(_sniperData, UIShopConstants.PriceSniper, out var err))
+            ShowSuccess("Mua Sniper thành công!");
+        else
+            ShowError(err);
     }
 
     public void OpenShop()
     {
+        if (_isIntermission) return;
+
         _isOpen = true;
         if (_shopPanel != null)
         {
@@ -141,7 +156,7 @@ public class ShopUI : MonoBehaviour
             _shopPanel.transform.SetAsLastSibling();
         }
         Time.timeScale = 0f;
-        HideError();
+        HideFeedback();
     }
 
     public void CloseShop()
@@ -150,20 +165,22 @@ public class ShopUI : MonoBehaviour
         if (_shopPanel != null)
             _shopPanel.SetActive(false);
         Time.timeScale = 1f;
-        HideError();
+        HideFeedback();
     }
+
+    private void ShowSuccess(string message)
+        => UIShopFeedback.ShowSuccess(this, _errorText, ref _feedbackRoutine, message);
 
     private void ShowError(string message)
-    {
-        if (_errorText == null) return;
-        _errorText.text = message;
-        _errorText.gameObject.SetActive(true);
-    }
+        => UIShopFeedback.ShowError(this, _errorText, ref _feedbackRoutine, message);
 
-    private void HideError()
+    private void HideFeedback()
+        => UIShopFeedback.Hide(_errorText, this, ref _feedbackRoutine);
+
+    private void ResolveWeaponRefs()
     {
-        if (_errorText != null)
-            _errorText.gameObject.SetActive(false);
+        _rifleData   ??= Resources.Load<WeaponData>("Weapons/Weapon_Rifle");
+        _shotgunData ??= Resources.Load<WeaponData>("Weapons/Weapon_Shotgun");
+        _sniperData  ??= Resources.Load<WeaponData>("Weapons/Weapon_Sniper");
     }
 }
-

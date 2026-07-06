@@ -3,8 +3,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// HUD trong màn chơi: HP, Shield, Timer, số quái còn sống, tiền.
-/// Chỉ lắng nghe event — không poll trong Update().
+/// HUD trong màn chơi — RULE §6.1, §6.4, §6.5.
+/// Chỉ lắng nghe event, không poll Update().
 /// </summary>
 public class HUDController : MonoBehaviour
 {
@@ -23,6 +23,11 @@ public class HUDController : MonoBehaviour
     [Header("Economy")]
     [SerializeField] private TMP_Text _moneyText;
 
+    [Header("Ammo")]
+    [SerializeField] private TMP_Text _ammoText;
+
+    private bool _isIntermission;
+
     private void Awake()
     {
         var canvas = GetComponentInParent<Canvas>();
@@ -32,38 +37,47 @@ public class HUDController : MonoBehaviour
 
     private void OnEnable()
     {
-        PlayerHealth.OnHealthChanged     += UpdateHPBar;
-        PlayerHealth.OnShieldChanged     += UpdateShieldBar;
-        LevelManager.OnTimerUpdated      += UpdateTimer;
-        LevelManager.OnEnemyCountChanged += UpdateEnemyCount;
-        EconomyManager.OnMoneyChanged    += UpdateMoneyDisplay;
+        PlayerHealth.OnHealthChanged              += UpdateHPBar;
+        PlayerHealth.OnShieldChanged              += UpdateShieldBar;
+        LevelManager.OnTimerUpdated               += UpdateTimer;
+        LevelManager.OnEnemyCountChanged          += UpdateEnemyText;
+        EconomyManager.OnMoneyChanged             += UpdateMoneyText;
+        Gun.OnAmmoChanged                         += UpdateAmmoText;
+        LevelManager.OnWaveIntermissionStateChanged += OnIntermissionStateChanged;
     }
 
     private void OnDisable()
     {
-        PlayerHealth.OnHealthChanged     -= UpdateHPBar;
-        PlayerHealth.OnShieldChanged     -= UpdateShieldBar;
-        LevelManager.OnTimerUpdated      -= UpdateTimer;
-        LevelManager.OnEnemyCountChanged -= UpdateEnemyCount;
-        EconomyManager.OnMoneyChanged    -= UpdateMoneyDisplay;
+        PlayerHealth.OnHealthChanged              -= UpdateHPBar;
+        PlayerHealth.OnShieldChanged              -= UpdateShieldBar;
+        LevelManager.OnTimerUpdated               -= UpdateTimer;
+        LevelManager.OnEnemyCountChanged          -= UpdateEnemyText;
+        EconomyManager.OnMoneyChanged             -= UpdateMoneyText;
+        Gun.OnAmmoChanged                         -= UpdateAmmoText;
+        LevelManager.OnWaveIntermissionStateChanged -= OnIntermissionStateChanged;
     }
 
-    private void UpdateHPBar(float current, float max)
+    private void OnIntermissionStateChanged(bool isIntermission)
+    {
+        _isIntermission = isIntermission;
+    }
+
+    private void UpdateHPBar(float currentHP, float maxHP)
     {
         if (_hpFill != null)
-            _hpFill.fillAmount = max > 0f ? current / max : 0f;
+            _hpFill.fillAmount = maxHP > 0f ? currentHP / maxHP : 0f;
 
         if (_hpText != null)
-            _hpText.text = $"{Mathf.CeilToInt(current)} / {Mathf.CeilToInt(max)}";
+            _hpText.text = $"{Mathf.CeilToInt(currentHP)} / {Mathf.CeilToInt(maxHP)}";
     }
 
-    private void UpdateShieldBar(float current, float max)
+    private void UpdateShieldBar(float currentShield, float maxShield)
     {
         if (_shieldFill != null)
-            _shieldFill.fillAmount = max > 0f ? current / max : 0f;
+            _shieldFill.fillAmount = maxShield > 0f ? currentShield / maxShield : 0f;
 
         if (_shieldText != null)
-            _shieldText.text = $"{Mathf.CeilToInt(current)} / {Mathf.CeilToInt(max)}";
+            _shieldText.text = $"{Mathf.CeilToInt(currentShield)} / {Mathf.CeilToInt(maxShield)}";
     }
 
     private void UpdateTimer(float timeRemaining)
@@ -74,22 +88,27 @@ public class HUDController : MonoBehaviour
         int seconds = Mathf.FloorToInt(timeRemaining % 60f);
         _timerText.text = $"{minutes:00}:{seconds:00}";
 
-        if (timeRemaining <= 30f)
+        if (!_isIntermission && timeRemaining <= 30f)
             _timerText.color = Color.red;
         else
             _timerText.color = Color.white;
     }
 
-    private void UpdateEnemyCount(int enemiesAlive)
+    private void UpdateEnemyText(int enemiesAlive)
     {
         if (_enemyCountText != null)
             _enemyCountText.text = $"Enemies: {enemiesAlive}";
     }
 
-    private void UpdateMoneyDisplay(int currentMoney)
+    private void UpdateMoneyText(int currentMoney)
     {
         if (_moneyText != null)
             _moneyText.text = $"{currentMoney} xu";
     }
-}
 
+    private void UpdateAmmoText(int currentAmmo, int reserveAmmo)
+    {
+        if (_ammoText != null)
+            _ammoText.text = $"Ammo: {currentAmmo} / {reserveAmmo}";
+    }
+}

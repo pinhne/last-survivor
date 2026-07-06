@@ -80,6 +80,57 @@ public class MenuController : MonoBehaviour
 
         if (_gameOverPanel != null)
             _gameOverPanel.SetActive(false);
+
+        FixVictoryOverlayLayout();
+    }
+
+    private void FixVictoryOverlayLayout()
+    {
+        if (_victoryPanel == null) return;
+
+        var card = _victoryPanel.transform.Find("OverlayCard");
+        if (card == null) return;
+
+        ReparentIfNeeded(_victoryScoreText, card);
+        ReparentIfNeeded(_victoryTimeText, card);
+
+        if (_victoryScoreText != null)
+            SetOverlayStat(_victoryScoreText.rectTransform, 0.50f);
+        if (_victoryTimeText != null)
+            SetOverlayStat(_victoryTimeText.rectTransform, 0.38f);
+
+        FixOverlayButton(card, "Btn_1", 0.22f);
+        FixOverlayButton(card, "Btn_2", 0.08f);
+
+        var cardRt = card.GetComponent<RectTransform>();
+        if (cardRt != null)
+            cardRt.sizeDelta = new Vector2(520f, 420f);
+    }
+
+    private static void FixOverlayButton(Transform card, string name, float anchorY)
+    {
+        var t = card.Find(name);
+        if (t == null) return;
+        var rt = t.GetComponent<RectTransform>();
+        if (rt == null) return;
+        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, anchorY);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = Vector2.zero;
+    }
+
+    private static void ReparentIfNeeded(TMP_Text text, Transform card)
+    {
+        if (text == null || text.transform.parent == card) return;
+        text.transform.SetParent(card, false);
+    }
+
+    private static void SetOverlayStat(RectTransform rt, float anchorY)
+    {
+        if (rt == null) return;
+        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, anchorY);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = Vector2.zero;
+        rt.sizeDelta = new Vector2(480f, 32f);
     }
 
     private void OnEnable()
@@ -155,7 +206,9 @@ public class MenuController : MonoBehaviour
     {
         if (_victoryPanel == null) return;
 
+        FixVictoryOverlayLayout();
         _victoryPanel.SetActive(true);
+        _victoryPanel.transform.SetAsLastSibling();
         Time.timeScale = 0f;
 
         if (LevelManager.Instance != null)
@@ -181,12 +234,10 @@ public class MenuController : MonoBehaviour
 
     private void OnVictoryContinue()
     {
+        // RULE §13: LevelManager/SpawnManager xử lý load scene — UI chỉ đóng overlay.
         Time.timeScale = 1f;
-
-        if (LevelManager.Instance != null && LevelManager.Instance.CurrentLevel == 1)
-            SceneManager.LoadScene(SCENE_WARZONE);
-        else
-            SceneManager.LoadScene(SCENE_VICTORY);
+        if (_victoryPanel != null)
+            _victoryPanel.SetActive(false);
     }
 
     private void ShowGameOver()
@@ -194,6 +245,7 @@ public class MenuController : MonoBehaviour
         if (_gameOverPanel == null) return;
 
         _gameOverPanel.SetActive(true);
+        _gameOverPanel.transform.SetAsLastSibling();
         Time.timeScale = 0f;
     }
 
@@ -203,4 +255,3 @@ public class MenuController : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }
-
