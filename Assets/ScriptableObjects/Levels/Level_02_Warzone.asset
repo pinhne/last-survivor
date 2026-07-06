@@ -19,7 +19,11 @@ MonoBehaviour:
     enemyCount: 6
     spawnInterval: 1.5
     delayBeforeWave: 0
-  - enemyPrefab: {fileID: 2880779935298703156, guid: bd82d7e47a9c43f4781546aa59622252, type: 3}
+  - enemyPrefab: {fileID: 2035274418259951901, guid: 98aeb2e746f6dd14d919c392399ce9a5, type: 3}
+    enemyCount: 8
+    spawnInterval: 1
+    delayBeforeWave: 10
+  - enemyPrefab: {fileID: 5506586787047571296, guid: d4a8740770f5a7045a66075f77cb048b, type: 3}
     enemyCount: 8
     spawnInterval: 1
     delayBeforeWave: 10
