@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class IroncladSpecter : EliteBossBase
 {
@@ -68,21 +69,37 @@ public class IroncladSpecter : EliteBossBase
             return;
         }
 
-        for (int i = 0; i < 3; i++)
+        int spawnedCount = 0;
+
+        for (int i = 0; i < summonPrefabs.Length; i++)
         {
-            Vector3 offset = Random.insideUnitSphere * 4f;
-            offset.y = 0;
-            int idx = Random.Range(0, summonPrefabs.Length);
+            if (summonPrefabs[i] == null) continue;
+
+            Vector3 spawnPosition = GetValidSummonPosition(i);
 
             GameObject minion = Instantiate(
-                summonPrefabs[idx],
-                transform.position + offset,
+                summonPrefabs[i],
+                spawnPosition,
                 Quaternion.identity
             );
 
             LevelManager.Instance?.RegisterEnemySpawned();
+            spawnedCount++;
         }
 
-        Debug.Log("[IroncladSpecter] Summoned 3 minions.");
+        Debug.Log($"[IroncladSpecter] Summoned {spawnedCount} minions.");
+    }
+    private Vector3 GetValidSummonPosition(int index)
+    {
+        float angle = index * Mathf.PI * 2f / Mathf.Max(1, summonPrefabs.Length);
+        Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * 4f;
+        Vector3 rawPosition = transform.position + offset;
+
+        if (NavMesh.SamplePosition(rawPosition, out NavMeshHit hit, 3f, NavMesh.AllAreas))
+        {
+            return hit.position;
+        }
+
+        return transform.position + offset;
     }
 }

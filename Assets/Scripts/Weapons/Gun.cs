@@ -7,6 +7,9 @@ public class Gun : MonoBehaviour
     private Vector3 _visualKickPositionOffset = Vector3.zero;
     private Vector3 _visualKickEulerOffset = Vector3.zero;
 
+    private Coroutine reloadCoroutine;
+
+
     // ── Static Events ───────────────────────────────────────────────────────
     public static event Action<int, int> OnAmmoChanged;
 
@@ -75,6 +78,7 @@ public class Gun : MonoBehaviour
     {
         if (_isAiming)
             SetAiming(false);
+        CancelReload();
     }
 
     private void Update()
@@ -231,7 +235,9 @@ public class Gun : MonoBehaviour
             LogShotAmmo();
 
         if (_currentAmmo <= 0 && _reserveAmmo > 0)
-            StartCoroutine(Reload());
+        {
+            TryReload();
+        }
     }
 
     private void SpawnMuzzleFlash()
@@ -326,7 +332,12 @@ public class Gun : MonoBehaviour
             return;
         }
 
-        StartCoroutine(Reload());
+        if (reloadCoroutine != null)
+        {
+            StopCoroutine(reloadCoroutine);
+        }
+
+        reloadCoroutine = StartCoroutine(Reload());
     }
 
     private IEnumerator Reload()
@@ -351,6 +362,7 @@ public class Gun : MonoBehaviour
         _reserveAmmo -= ammoToLoad;
 
         _isReloading = false;
+        reloadCoroutine = null;
 
         OnAmmoChanged?.Invoke(_currentAmmo, _reserveAmmo);
 
@@ -507,5 +519,15 @@ public class Gun : MonoBehaviour
         }
 
         return false;
+    }
+    public void CancelReload()
+    {
+        if (reloadCoroutine != null)
+        {
+            StopCoroutine(reloadCoroutine);
+            reloadCoroutine = null;
+        }
+
+        _isReloading = false;
     }
 }

@@ -56,9 +56,6 @@ MonoBehaviour:
   - {fileID: 2035274418259951901, guid: 98aeb2e746f6dd14d919c392399ce9a5, type: 3}
   - {fileID: 2880779935298703156, guid: bd82d7e47a9c43f4781546aa59622252, type: 3}
   - {fileID: 5506586787047571296, guid: d4a8740770f5a7045a66075f77cb048b, type: 3}
-  - {fileID: 5506586787047571296, guid: d4a8740770f5a7045a66075f77cb048b, type: 3}
-  - {fileID: 2035274418259951901, guid: 98aeb2e746f6dd14d919c392399ce9a5, type: 3}
-  - {fileID: 2880779935298703156, guid: bd82d7e47a9c43f4781546aa59622252, type: 3}
 --- !u!114 &7798645115606270860
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -91,7 +88,7 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.5
-  m_Speed: 3.5
+  m_Speed: 4.5
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 120

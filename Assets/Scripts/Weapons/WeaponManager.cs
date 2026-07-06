@@ -70,14 +70,26 @@ public class WeaponManager : MonoBehaviour
     {
         if (index < 0 || index >= _unlockedWeapons.Count) return;
 
-        foreach (Gun gun in _gunInstances)
-            gun.gameObject.SetActive(false);
+        Gun currentGun = CurrentGun;
+
+        // Nếu đang cầm đúng súng đó rồi thì không làm gì thêm
+        if (index == _currentIndex && currentGun != null && currentGun.gameObject.activeSelf)
+            return;
+
+        // Hủy reload của súng cũ trước khi tắt
+        if (currentGun != null)
+        {
+            currentGun.CancelReload();
+            currentGun.gameObject.SetActive(false);
+        }
 
         _currentIndex = index;
-        _gunInstances[_currentIndex].gameObject.SetActive(true);
 
-        // Gun.OnEnable() tự broadcast OnAmmoChanged khi SetActive(true)
-        // Không gọi Gun.OnAmmoChanged từ đây — C# không cho invoke event từ class ngoài
+        Gun newGun = _gunInstances[_currentIndex];
+
+        if (newGun != null)
+            newGun.gameObject.SetActive(true);
+
         SetWeaponAnimation(_unlockedWeapons[_currentIndex].weaponAnimationIndex);
 
         OnWeaponChanged?.Invoke(_unlockedWeapons[_currentIndex]);
