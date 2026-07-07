@@ -7,6 +7,10 @@ public class LevelManager : MonoBehaviour
 {
     public static LevelManager Instance { get; private set; }
 
+    public int KillsThisLevel { get; private set; }
+
+    private bool _summarySaved = false;
+
     public const float LEVEL_TIME_LIMIT = 300f;
     public const int TOTAL_LEVELS = 2;
 
@@ -37,6 +41,9 @@ public class LevelManager : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+
+        if (SceneManager.GetActiveScene().name == "Desert")
+            GameRunState.ResetRun();
     }
 
     private void OnEnable()
@@ -56,6 +63,11 @@ public class LevelManager : MonoBehaviour
 
         // Hiện game chỉ có 2 level gameplay: Desert = 1, Warzone = 2.
         CurrentLevel = SceneManager.GetActiveScene().name == "Desert" ? 1 : 2;
+        int currentMoney = EconomyManager.Instance != null
+        ? EconomyManager.Instance.CurrentMoney
+        : 0;
+
+        GameRunState.StartLevel(currentMoney);
 
         OnTimerUpdated?.Invoke(TimeRemaining);
         OnEnemyCountChanged?.Invoke(EnemiesAlive);
@@ -89,6 +101,8 @@ public class LevelManager : MonoBehaviour
         if (_levelEnded) return;
 
         EnemiesAlive = Mathf.Max(0, EnemiesAlive - 1);
+        KillsThisLevel++;
+
         OnEnemyCountChanged?.Invoke(EnemiesAlive);
     }
 
@@ -112,6 +126,7 @@ public class LevelManager : MonoBehaviour
 
     public void RegisterBossDefeated()
     {
+        KillsThisLevel++;
         TriggerVictory();
     }
 
@@ -169,6 +184,8 @@ public class LevelManager : MonoBehaviour
     {
         Time.timeScale = 1f;
 
+        SaveRunSummaryAndWeapons();
+
         if (CurrentLevel < TOTAL_LEVELS)
             SceneManager.LoadScene("Warzone");
         else
@@ -185,6 +202,32 @@ public class LevelManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         SceneManager.LoadScene("MainMenu");
+    }
+
+    private void SaveRunSummaryAndWeapons()
+    {
+        if (_summarySaved)
+            return;
+
+        _summarySaved = true;
+
+        WeaponManager weaponManager = FindFirstObjectByType<WeaponManager>();
+        if (weaponManager != null)
+            weaponManager.SaveRunState();
+
+        int currentMoney = EconomyManager.Instance != null
+            ? EconomyManager.Instance.CurrentMoney
+            : 0;
+
+        float elapsedTime = LEVEL_TIME_LIMIT - TimeRemaining;
+
+        GameRunState.FinishLevel(
+            currentMoney,
+            elapsedTime,
+            KillsThisLevel
+        );
+
+        Debug.Log($"[LevelManager] Saved run summary | Score: {GameRunState.TotalScore} | Time: {GameRunState.TotalTime} | Kills: {GameRunState.TotalKills}");
     }
 
     // ── UI Debug Helpers ─────────────────────────────────────────────────────

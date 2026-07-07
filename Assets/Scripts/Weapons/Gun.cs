@@ -449,6 +449,21 @@ public class Gun : MonoBehaviour
     }
 
     // ── Refill Ammo ────────────────────────────────────────────────────────
+
+    public void SetAmmo(int currentAmmo, int reserveAmmo)
+    {
+        if (_data == null)
+            return;
+
+        _currentAmmo = Mathf.Clamp(currentAmmo, 0, _data.maxAmmo);
+        _reserveAmmo = Mathf.Clamp(reserveAmmo, 0, _data.maxReserve);
+        _isReloading = false;
+
+        OnAmmoChanged?.Invoke(_currentAmmo, _reserveAmmo);
+
+        if (_logReload)
+            Debug.Log($"[Gun][{GetWeaponName()}] Ammo restored | Ammo: {_currentAmmo}/{_data.maxAmmo} | Reserve: {_reserveAmmo}/{_data.maxReserve}");
+    }
     public void RefillAmmo()
     {
         if (_data == null) return;

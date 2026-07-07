@@ -12,6 +12,10 @@ using UnityEngine.UI;
 /// </summary>
 public class ShopUI : MonoBehaviour
 {
+    [Header("Refill ammo buttons")]
+    [SerializeField] private Button _btnCurrentAmmo;
+    [SerializeField] private Button _btnAllAmmo;
+
     [Header("Panel")]
     [SerializeField] private GameObject _shopPanel;
     [SerializeField] private TMP_Text _errorText;
@@ -61,7 +65,8 @@ public class ShopUI : MonoBehaviour
         }
 
         HideFeedback();
-
+        if (_btnCurrentAmmo != null) _btnCurrentAmmo.onClick.AddListener(OnBuyCurrentAmmo);
+        if (_btnAllAmmo != null) _btnAllAmmo.onClick.AddListener(OnBuyAllAmmo);
         if (_btnHpPotion != null) _btnHpPotion.onClick.AddListener(OnBuyHp);
         if (_btnShield != null) _btnShield.onClick.AddListener(OnBuyShield);
         if (_btnRifle != null) _btnRifle.onClick.AddListener(OnBuyRifle);
@@ -75,6 +80,58 @@ public class ShopUI : MonoBehaviour
 
         BindShopToggleButton();
         SetShopToggleVisible(_allowCombatShop);
+    }
+
+    private void OnBuyCurrentAmmo()
+    {
+        WeaponManager weaponManager = FindFirstObjectByType<WeaponManager>();
+
+        if (weaponManager == null)
+        {
+            ShowError("Không tìm thấy WeaponManager.");
+            return;
+        }
+
+        if (EconomyManager.Instance == null)
+        {
+            ShowError("Không tìm thấy EconomyManager.");
+            return;
+        }
+
+        if (!EconomyManager.Instance.SpendMoney(UIShopConstants.PriceCurrentAmmo))
+        {
+            ShowError(UIShopConstants.ErrorNotEnoughMoney);
+            return;
+        }
+
+        weaponManager.RefillCurrentWeaponAmmo();
+        ShowSuccess("Mua đạn cho súng hiện tại thành công!");
+    }
+
+    private void OnBuyAllAmmo()
+    {
+        WeaponManager weaponManager = FindFirstObjectByType<WeaponManager>();
+
+        if (weaponManager == null)
+        {
+            ShowError("Không tìm thấy WeaponManager.");
+            return;
+        }
+
+        if (EconomyManager.Instance == null)
+        {
+            ShowError("Không tìm thấy EconomyManager.");
+            return;
+        }
+
+        if (!EconomyManager.Instance.SpendMoney(UIShopConstants.PriceAllAmmo))
+        {
+            ShowError(UIShopConstants.ErrorNotEnoughMoney);
+            return;
+        }
+
+        weaponManager.RefillAllUnlockedWeaponsAmmo();
+        ShowSuccess("Mua đầy đạn cho tất cả súng thành công!");
     }
 
     private void OnEnable()

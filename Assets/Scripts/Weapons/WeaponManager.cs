@@ -13,6 +13,7 @@ public class WeaponManager : MonoBehaviour
     // ── References ────────────────────────────────────────────────────────────
     [SerializeField] private Transform _weaponHolder;
     [SerializeField] private List<WeaponData> _starterWeapons;
+    [SerializeField] private List<WeaponData> _allWeaponsForRestore;
 
     // ── Private State ─────────────────────────────────────────────────────────
     private readonly List<WeaponData> _unlockedWeapons = new List<WeaponData>();
@@ -36,7 +37,9 @@ public class WeaponManager : MonoBehaviour
         foreach (WeaponData weapon in _starterWeapons)
             AddWeapon(weapon);
 
-        if (_unlockedWeapons.Count > 0)
+        RestoreRunState();
+
+        if (_unlockedWeapons.Count > 0 && CurrentGun == null)
             EquipWeapon(0);
     }
 
@@ -181,5 +184,106 @@ public class WeaponManager : MonoBehaviour
 
         _unlockedWeapons.Add(weaponData);
         _gunInstances.Add(gun);
+    }
+    public void SaveRunState()
+    {
+        for (int i = 0; i < _unlockedWeapons.Count; i++)
+        {
+            WeaponData data = _unlockedWeapons[i];
+            Gun gun = i < _gunInstances.Count ? _gunInstances[i] : null;
+
+            if (data == null || gun == null)
+                continue;
+
+            GameRunState.SaveWeaponAmmo(
+                data.weaponName,
+                gun.CurrentAmmo,
+                gun.ReserveAmmo
+            );
+        }
+
+        if (CurrentData != null)
+            GameRunState.SaveEquippedWeapon(CurrentData.weaponName);
+    }
+
+    private void RestoreRunState()
+    {
+        if (!GameRunState.HasSavedWeapons)
+            return;
+
+        foreach (string weaponName in GameRunState.SavedWeaponNames)
+        {
+            WeaponData data = FindWeaponDataByName(weaponName);
+
+            if (data == null)
+            {
+                Debug.LogWarning($"[WeaponManager] Không tìm thấy WeaponData để restore: {weaponName}");
+                continue;
+            }
+
+            if (!IsWeaponUnlocked(data))
+                AddWeapon(data);
+        }
+
+        for (int i = 0; i < _unlockedWeapons.Count; i++)
+        {
+            WeaponData data = _unlockedWeapons[i];
+            Gun gun = i < _gunInstances.Count ? _gunInstances[i] : null;
+
+            if (data == null || gun == null)
+                continue;
+
+            if (GameRunState.TryGetWeaponAmmo(data.weaponName, out GameRunState.WeaponAmmoState state))
+                gun.SetAmmo(state.currentAmmo, state.reserveAmmo);
+        }
+
+        int equippedIndex = FindUnlockedWeaponIndex(GameRunState.EquippedWeaponName);
+
+        if (equippedIndex >= 0)
+            EquipWeapon(equippedIndex);
+        else if (_unlockedWeapons.Count > 0)
+            EquipWeapon(0);
+    }
+
+    private WeaponData FindWeaponDataByName(string weaponName)
+    {
+        if (string.IsNullOrWhiteSpace(weaponName))
+            return null;
+
+        if (_allWeaponsForRestore != null)
+        {
+            foreach (WeaponData data in _allWeaponsForRestore)
+            {
+                if (data != null && data.weaponName == weaponName)
+                    return data;
+            }
+        }
+
+        if (_starterWeapons != null)
+        {
+            foreach (WeaponData data in _starterWeapons)
+            {
+                if (data != null && data.weaponName == weaponName)
+                    return data;
+            }
+        }
+
+        return null;
+    }
+
+    private int FindUnlockedWeaponIndex(string weaponName)
+    {
+        if (string.IsNullOrWhiteSpace(weaponName))
+            return -1;
+
+        for (int i = 0; i < _unlockedWeapons.Count; i++)
+        {
+            WeaponData data = _unlockedWeapons[i];
+
+            if (data != null && data.weaponName == weaponName)
+                return i;
+        }
+
+        return -1;
     }
 }
