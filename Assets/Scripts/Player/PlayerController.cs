@@ -6,12 +6,12 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float _moveSpeed = 6f;      // Walk speed
-    [SerializeField] private float _runSpeed = 9f;       // Hold Ctrl to run
+    [SerializeField] private float _runSpeed = 9f;       // Hold Shift to run
     [SerializeField] private float _jumpHeight = 1.5f;
     [SerializeField] private float _gravity = -9.81f;
 
     [Header("Run")]
-    [SerializeField] private KeyCode _runKey = KeyCode.LeftControl;
+    [SerializeField] private KeyCode _runKey = KeyCode.LeftShift;
     [SerializeField] private bool _allowRightControlRun = true;
 
     [Header("Dodge")]

@@ -1514,7 +1514,7 @@ MonoBehaviour:
   _runSpeed: 9
   _jumpHeight: 2
   _gravity: -32
-  _runKey: 306
+  _runKey: 304
   _allowRightControlRun: 1
   _dodgeLeftKey: 113
   _dodgeRightKey: 101

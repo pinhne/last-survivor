@@ -6,6 +6,8 @@ public class PlayerHealth : MonoBehaviour
     // ── Constants (Source of Truth — không ai tự đặt số khác) ──────────────
     public const float MAX_HP     = 100f;
     public const float MAX_SHIELD = 100f;
+    public const float HP_POTION_HEAL = 50f;
+    public const float SHIELD_RECHARGE_AMOUNT = 100f;
 
     // ── Static Events (Thu Hà lắng nghe để update UI) ──────────────────────
     public static event Action<float, float> OnHealthChanged;   // (currentHP, maxHP)
@@ -85,6 +87,34 @@ public class PlayerHealth : MonoBehaviour
 
         CurrentShield = Mathf.Min(CurrentShield + amount, MAX_SHIELD);
         OnShieldChanged?.Invoke(CurrentShield, MAX_SHIELD);
+    }
+
+
+    // ── UI Debug Helpers (dùng cho UI test, không thay core gameplay) ─────────
+    public static void DebugFireHealthChanged(float current, float max)
+    {
+        PlayerHealth playerHealth = UnityEngine.Object.FindFirstObjectByType<PlayerHealth>();
+        playerHealth?.SyncDebugHealth(current, max);
+        OnHealthChanged?.Invoke(current, max);
+    }
+
+    public static void DebugFireShieldChanged(float current, float max)
+    {
+        PlayerHealth playerHealth = UnityEngine.Object.FindFirstObjectByType<PlayerHealth>();
+        playerHealth?.SyncDebugShield(current, max);
+        OnShieldChanged?.Invoke(current, max);
+    }
+
+    public void SyncDebugHealth(float current, float max)
+    {
+        CurrentHP = Mathf.Clamp(current, 0f, max);
+        if (CurrentHP > 0f)
+            _isDead = false;
+    }
+
+    public void SyncDebugShield(float current, float max)
+    {
+        CurrentShield = Mathf.Clamp(current, 0f, max);
     }
 
     // ── Private Methods ──────────────────────────────────────────────────────

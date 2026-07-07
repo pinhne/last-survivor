@@ -13,6 +13,11 @@ public class Gun : MonoBehaviour
     // ── Static Events ───────────────────────────────────────────────────────
     public static event Action<int, int> OnAmmoChanged;
 
+    public static void DebugFireAmmoChanged(int currentAmmo, int reserveAmmo)
+    {
+        OnAmmoChanged?.Invoke(currentAmmo, reserveAmmo);
+    }
+
     // ── References ─────────────────────────────────────────────────────────
     [Header("Data")]
     [SerializeField] private WeaponData _data;

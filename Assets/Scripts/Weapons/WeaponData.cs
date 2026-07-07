@@ -9,8 +9,16 @@ using UnityEngine.Serialization;
 public class WeaponData : ScriptableObject
 {
     [Header("Info")]
+    [FormerlySerializedAs("displayName")]
     public string weaponName = "Pistol";
     public Sprite weaponIcon;
+
+    // Alias tương thích với UI/asset mới nếu đang gọi WeaponData.displayName.
+    public string displayName
+    {
+        get => string.IsNullOrWhiteSpace(weaponName) ? name : weaponName;
+        set => weaponName = value;
+    }
 
     [Header("Stats")]
     public float damage = 25f;

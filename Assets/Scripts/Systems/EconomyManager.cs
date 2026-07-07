@@ -6,6 +6,11 @@ public class EconomyManager : MonoBehaviour
     public static EconomyManager Instance { get; private set; }
     public int CurrentMoney { get; private set; }
 
+    internal void SyncDebugMoney(int money)
+    {
+        CurrentMoney = Mathf.Max(0, money);
+    }
+
     public static event Action<int> OnMoneyChanged;
 
     private void Awake()
@@ -67,4 +72,12 @@ public class EconomyManager : MonoBehaviour
     {
         OnMoneyChanged?.Invoke(CurrentMoney);
     }
+
+    // Dùng cho UI test/mock, không thay luồng tiền thật của gameplay.
+    public static void DebugFireMoneyChanged(int money)
+    {
+        Instance?.SyncDebugMoney(money);
+        OnMoneyChanged?.Invoke(Mathf.Max(0, money));
+    }
+
 }

@@ -8,6 +8,23 @@ public class BossHealth : EnemyHealth
     public static event Action<string> OnBossAppeared;
     public static event Action OnBossDefeated;
 
+
+    // ── UI Debug Helpers (dùng cho UI layout/test) ───────────────────────────
+    public static void DebugFireBossAppeared(string name)
+    {
+        OnBossAppeared?.Invoke(name);
+    }
+
+    public static void DebugFireBossHealthChanged(float current, float max)
+    {
+        OnBossHealthChanged?.Invoke(current, max);
+    }
+
+    public static void DebugFireBossDefeated()
+    {
+        OnBossDefeated?.Invoke();
+    }
+
     [Header("Boss Info")]
     [SerializeField] private string bossName = "Boss";
     [SerializeField] private int bossReward = 300;

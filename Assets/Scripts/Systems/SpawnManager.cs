@@ -9,13 +9,14 @@ public class SpawnManager : MonoBehaviour
 
     public const float MIN_SPAWN_DIST_FROM_PLAYER = 10f;
     public const float SPAWN_INTERVAL_BASE = 1.5f;
+    public const float INTERMISSION_DURATION = 15f;
 
     public static event Action<int, int, float> OnWaveIntermissionStarted; // clearedWave, nextWave, duration
     public static event Action<float> OnWaveIntermissionTimerUpdated;       // remaining seconds
     public static event Action OnWaveIntermissionEnded;
 
     [Header("Wave Intermission")]
-    [SerializeField] private float waveIntermissionDuration = 15f;
+    [SerializeField] private float waveIntermissionDuration = INTERMISSION_DURATION;
     [SerializeField] private bool enableTemporaryContinueKey = true;
     [SerializeField] private KeyCode temporaryContinueKey = KeyCode.C;
 
@@ -243,6 +244,23 @@ public class SpawnManager : MonoBehaviour
         {
             agent.Warp(bossHit.position);
         }
+    }
+
+
+    // ── UI Debug Helpers (dùng cho UI layout/test) ───────────────────────────
+    public static void DebugFireIntermissionStarted(int clearedWave, int nextWave, float duration)
+    {
+        OnWaveIntermissionStarted?.Invoke(clearedWave, nextWave, duration);
+    }
+
+    public static void DebugFireIntermissionTimerUpdated(float remaining)
+    {
+        OnWaveIntermissionTimerUpdated?.Invoke(remaining);
+    }
+
+    public static void DebugFireIntermissionEnded()
+    {
+        OnWaveIntermissionEnded?.Invoke();
     }
 
     public void StopAllSpawning()
