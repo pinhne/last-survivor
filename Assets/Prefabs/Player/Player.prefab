@@ -1554,6 +1554,8 @@ MonoBehaviour:
   _weaponHolder: {fileID: 1000391166176056090}
   _starterWeapons:
   - {fileID: 11400000, guid: 34f4778fa41357744bce1b28d2cd4fb0, type: 2}
+  _allWeaponsForRestore:
+  - {fileID: 11400000, guid: 34f4778fa41357744bce1b28d2cd4fb0, type: 2}
   - {fileID: 11400000, guid: 61758d894acbb1946ba4ce0ab6b775ed, type: 2}
   - {fileID: 11400000, guid: 9d4e881496061e44c8060bbbda799674, type: 2}
   - {fileID: 11400000, guid: c5757d095d98ba546a3b124c0a66fa73, type: 2}

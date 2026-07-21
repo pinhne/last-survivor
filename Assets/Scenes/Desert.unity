@@ -912,6 +912,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelManager
   victoryUiDelay: 4
   gameOverUiDelay: 0
+  normalEnemyScore: 100
+  bossScore: 1000
 --- !u!4 &872111638
 Transform:
   m_ObjectHideFlags: 0

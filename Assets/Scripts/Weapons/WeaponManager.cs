@@ -34,13 +34,61 @@ public class WeaponManager : MonoBehaviour
 
     private void Start()
     {
-        foreach (WeaponData weapon in _starterWeapons)
-            AddWeapon(weapon);
+        // Súng mặc định, Inspector chỉ để Pistol.
+        if (_starterWeapons != null)
+        {
+            foreach (WeaponData weapon in _starterWeapons)
+            {
+                AddWeapon(weapon);
+            }
+        }
 
+        // Khôi phục các súng đã mua từ những lần chơi trước.
+        RestorePersistentUnlockedWeapons();
+
+        // Khôi phục ammo và súng đang cầm khi chuyển
+        // Desert → Warzone trong cùng một phiên chơi.
         RestoreRunState();
 
-        if (_unlockedWeapons.Count > 0 && CurrentGun == null)
+        // Bảo đảm luôn có một súng đang được bật.
+        if (_unlockedWeapons.Count > 0 &&
+            (CurrentGun == null ||
+             !CurrentGun.gameObject.activeSelf))
+        {
             EquipWeapon(0);
+        }
+    }
+
+    private void RestorePersistentUnlockedWeapons()
+    {
+        HashSet<string> savedWeaponNames =
+            SaveManager.LoadUnlockedWeaponNames();
+
+        if (_allWeaponsForRestore == null)
+            return;
+
+        foreach (WeaponData weaponData
+                 in _allWeaponsForRestore)
+        {
+            if (weaponData == null)
+                continue;
+
+            if (!savedWeaponNames.Contains(
+                    weaponData.weaponName))
+            {
+                continue;
+            }
+
+            if (IsWeaponUnlocked(weaponData))
+                continue;
+
+            AddWeapon(weaponData);
+
+            Debug.Log(
+                $"[WeaponManager] Đã khôi phục súng: " +
+                $"{weaponData.weaponName}"
+            );
+        }
     }
 
     private void Update()
@@ -104,28 +152,79 @@ public class WeaponManager : MonoBehaviour
     }
 
     // ── Unlock Weapon (Shop/UI gọi sau này) ───────────────────────────────────
-    public void UnlockWeapon(WeaponData newWeapon)
+    public void UnlockWeapon(
+    WeaponData newWeapon
+)
     {
         if (newWeapon == null)
         {
-            Debug.LogWarning("[WeaponManager] Cannot unlock null weapon.");
+            Debug.LogWarning(
+                "[WeaponManager] Cannot unlock null weapon."
+            );
+
             return;
         }
 
-        if (_unlockedWeapons.Contains(newWeapon))
+        if (IsWeaponUnlocked(newWeapon))
         {
-            Debug.Log($"[WeaponManager] {newWeapon.weaponName} đã unlock rồi.");
+            Debug.Log(
+                $"[WeaponManager] " +
+                $"{newWeapon.weaponName} đã sở hữu."
+            );
+
             return;
         }
 
         AddWeapon(newWeapon);
-        EquipWeapon(_unlockedWeapons.Count - 1);
-        Debug.Log($"[WeaponManager] Đã unlock: {newWeapon.weaponName}");
+
+        // AddWeapon thất bại thì không được lưu.
+        if (!IsWeaponUnlocked(newWeapon))
+        {
+            Debug.LogError(
+                $"[WeaponManager] Không thể mở khóa " +
+                $"{newWeapon.weaponName}."
+            );
+
+            return;
+        }
+
+        SaveManager.SaveUnlockedWeapon(
+            newWeapon.weaponName
+        );
+
+        int newWeaponIndex =
+            FindUnlockedWeaponIndex(
+                newWeapon.weaponName
+            );
+
+        if (newWeaponIndex >= 0)
+            EquipWeapon(newWeaponIndex);
+
+        Debug.Log(
+            $"[WeaponManager] Đã mở khóa và lưu: " +
+            $"{newWeapon.weaponName}"
+        );
     }
 
-    public bool IsWeaponUnlocked(WeaponData weaponData)
+    public bool IsWeaponUnlocked(
+    WeaponData weaponData
+)
     {
-        return weaponData != null && _unlockedWeapons.Contains(weaponData);
+        if (weaponData == null)
+            return false;
+
+        foreach (WeaponData unlockedWeapon
+                 in _unlockedWeapons)
+        {
+            if (unlockedWeapon != null &&
+                unlockedWeapon.weaponName ==
+                weaponData.weaponName)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // ── Ammo Support cho shop giữa wave ───────────────────────────────────────
@@ -157,30 +256,56 @@ public class WeaponManager : MonoBehaviour
     {
         if (weaponData == null)
         {
-            Debug.LogWarning("[WeaponManager] WeaponData is null.");
+            Debug.LogWarning(
+                "[WeaponManager] WeaponData is null."
+            );
+
+            return;
+        }
+
+        if (IsWeaponUnlocked(weaponData))
+        {
+            Debug.Log(
+                $"[WeaponManager] Bỏ qua súng trùng: " +
+                $"{weaponData.weaponName}"
+            );
+
+            return;
+        }
+
+        if (_weaponHolder == null)
+        {
+            Debug.LogError(
+                "[WeaponManager] Weapon Holder chưa được gán."
+            );
+
             return;
         }
 
         if (weaponData.weaponPrefab == null)
         {
-            Debug.LogWarning($"[WeaponManager] {weaponData.weaponName} chưa có weaponPrefab!");
+            Debug.LogWarning(
+                $"[WeaponManager] {weaponData.weaponName} " +
+                $"chưa có weaponPrefab."
+            );
+
             return;
         }
 
-        GameObject weaponObj = Instantiate(
+        GameObject weaponObject = Instantiate(
             weaponData.weaponPrefab,
             _weaponHolder.position,
             _weaponHolder.rotation,
             _weaponHolder
         );
 
-        Gun gun = weaponObj.GetComponent<Gun>();
+        Gun gun = weaponObject.GetComponent<Gun>();
+
         if (gun == null)
-            gun = weaponObj.AddComponent<Gun>();
+            gun = weaponObject.AddComponent<Gun>();
 
         gun.Initialize(weaponData);
-
-        weaponObj.SetActive(false);
+        weaponObject.SetActive(false);
 
         _unlockedWeapons.Add(weaponData);
         _gunInstances.Add(gun);

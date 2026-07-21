@@ -7,6 +7,11 @@ public class BossHealth : EnemyHealth
     public static event Action<float, float> OnBossHealthChanged;
     public static event Action<string> OnBossAppeared;
     public static event Action OnBossDefeated;
+    public bool IsInitialized
+    {
+        get;
+        private set;
+    }
 
 
     // ── UI Debug Helpers (dùng cho UI layout/test) ───────────────────────────
@@ -42,10 +47,24 @@ public class BossHealth : EnemyHealth
         base.Start();
 
         if (bossAnimator == null)
-            bossAnimator = GetComponentInChildren<Animator>();
+        {
+            bossAnimator =
+                GetComponentInChildren<Animator>();
+        }
+
+        IsInitialized = true;
 
         OnBossAppeared?.Invoke(bossName);
-        OnBossHealthChanged?.Invoke(_currentHP, maxHP);
+
+        OnBossHealthChanged?.Invoke(
+            _currentHP,
+            maxHP
+        );
+
+        Debug.Log(
+            $"[BossHealth] Initialized | " +
+            $"HP={_currentHP}/{maxHP}"
+        );
     }
 
     public override void TakeDamage(float damage)

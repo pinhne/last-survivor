@@ -16,7 +16,7 @@ MonoBehaviour:
   weaponIcon: {fileID: 0}
   damage: 18
   fireRate: 8
-  range: 100
+  range: 999
   isAutoFire: 1
   maxAmmo: 30
   maxReserve: 120

@@ -3,37 +3,45 @@ using UnityEngine;
 
 public class EconomyManager : MonoBehaviour
 {
-    public static EconomyManager Instance { get; private set; }
-    public int CurrentMoney { get; private set; }
-
-    internal void SyncDebugMoney(int money)
+    public static EconomyManager Instance
     {
-        CurrentMoney = Mathf.Max(0, money);
+        get;
+        private set;
+    }
+
+    public int CurrentMoney
+    {
+        get;
+        private set;
     }
 
     public static event Action<int> OnMoneyChanged;
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
+        if (Instance != null &&
+            Instance != this)
         {
-            // Chỉ xóa component EconomyManager trùng, không xóa cả GameManagers của scene mới.
             Destroy(this);
             return;
         }
 
-        // Nếu EconomyManager đang nằm chung object với LevelManager/SpawnManager,
-        // không được DontDestroyOnLoad cả object đó, vì sẽ kéo theo hệ thống level/spawn cũ sang scene mới.
-        // Tạo một object riêng chỉ giữ EconomyManager để lưu tiền xuyên scene.
         bool sharesObjectWithSceneSystems =
             GetComponent<LevelManager>() != null ||
             GetComponent<SpawnManager>() != null;
 
         if (sharesObjectWithSceneSystems)
         {
-            GameObject persistentObject = new GameObject("EconomyManager_Persistent");
-            EconomyManager persistentEconomy = persistentObject.AddComponent<EconomyManager>();
-            persistentEconomy.CurrentMoney = CurrentMoney;
+            // Tách EconomyManager khỏi GameManagers của scene,
+            // tránh kéo LevelManager và SpawnManager cũ sang scene mới.
+            GameObject persistentObject =
+                new GameObject(
+                    "EconomyManager_Persistent"
+                );
+
+            persistentObject.AddComponent<
+                EconomyManager
+            >();
 
             Destroy(this);
             return;
@@ -41,30 +49,60 @@ public class EconomyManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        // Nạp tiền đã lưu trên máy.
+        CurrentMoney =
+            SaveManager.LoadMoney();
+
         OnMoneyChanged?.Invoke(CurrentMoney);
+
+        Debug.Log(
+            $"[EconomyManager] Loaded money: " +
+            $"{CurrentMoney}"
+        );
     }
 
     public void AddMoney(int amount)
     {
-        if (amount <= 0) return;
+        if (amount <= 0)
+            return;
 
         CurrentMoney += amount;
+
+        SaveCurrentMoney();
         OnMoneyChanged?.Invoke(CurrentMoney);
     }
 
     public bool SpendMoney(int amount)
     {
-        if (amount <= 0) return true;
-        if (CurrentMoney < amount) return false;
+        if (amount <= 0)
+            return true;
+
+        if (CurrentMoney < amount)
+            return false;
 
         CurrentMoney -= amount;
+
+        SaveCurrentMoney();
         OnMoneyChanged?.Invoke(CurrentMoney);
+
         return true;
+    }
+
+    public void RestoreMoney(int amount)
+    {
+        CurrentMoney =
+            Mathf.Max(0, amount);
+
+        SaveCurrentMoney();
+        OnMoneyChanged?.Invoke(CurrentMoney);
     }
 
     public void ResetMoney()
     {
         CurrentMoney = 0;
+
+        SaveCurrentMoney();
         OnMoneyChanged?.Invoke(CurrentMoney);
     }
 
@@ -73,11 +111,25 @@ public class EconomyManager : MonoBehaviour
         OnMoneyChanged?.Invoke(CurrentMoney);
     }
 
-    // Dùng cho UI test/mock, không thay luồng tiền thật của gameplay.
-    public static void DebugFireMoneyChanged(int money)
+    private void SaveCurrentMoney()
     {
-        Instance?.SyncDebugMoney(money);
-        OnMoneyChanged?.Invoke(Mathf.Max(0, money));
+        SaveManager.SaveMoney(CurrentMoney);
     }
 
+    internal void SyncDebugMoney(int money)
+    {
+        CurrentMoney =
+            Mathf.Max(0, money);
+    }
+
+    public static void DebugFireMoneyChanged(
+        int money
+    )
+    {
+        Instance?.SyncDebugMoney(money);
+
+        OnMoneyChanged?.Invoke(
+            Mathf.Max(0, money)
+        );
+    }
 }

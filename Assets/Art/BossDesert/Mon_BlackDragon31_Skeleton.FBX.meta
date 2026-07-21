@@ -31,11 +31,11 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Mon_BlackDragon31_Btl_Atk01
-      takeName: Mon_BlackDragon31_Btl_Atk01
+      name: Mon_BlackDragon31_Btl_Atk02 (1)
+      takeName: Mon_BlackDragon31_Btl_Atk02
       internalID: 1141228597334504718
-      firstFrame: 0
-      lastFrame: 42
+      firstFrame: 43
+      lastFrame: 83
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -54,11 +54,18 @@ ModelImporter:
       mirror: 0
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
-      events: []
+      events:
+      - time: 0.830671
+        functionName: AE_AttackFinished
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0
+        intParameter: 0
+        messageOptions: 0
       transformMask: []
       maskType: 3
       maskSource: {instanceID: 0}
-      additiveReferencePoseFrame: 0
+      additiveReferencePoseFrame: 43
     - serializedVersion: 16
       name: Mon_BlackDragon31_Btl_Atk02
       takeName: Mon_BlackDragon31_Btl_Atk02
@@ -83,11 +90,25 @@ ModelImporter:
       mirror: 0
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
-      events: []
+      events:
+      - time: 0.37724543
+        functionName: AE_AttackFinished
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0
+        intParameter: 0
+        messageOptions: 0
+      - time: 0.71137726
+        functionName: AE_DealDamage
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0
+        intParameter: 0
+        messageOptions: 0
       transformMask: []
       maskType: 3
       maskSource: {instanceID: 0}
-      additiveReferencePoseFrame: 0
+      additiveReferencePoseFrame: 43
     - serializedVersion: 16
       name: Mon_BlackDragon31_Btl_Atk03
       takeName: Mon_BlackDragon31_Btl_Atk03
@@ -141,11 +162,18 @@ ModelImporter:
       mirror: 0
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
-      events: []
+      events:
+      - time: 0.32715654
+        functionName: AE_RangedHit
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0
+        intParameter: 0
+        messageOptions: 0
       transformMask: []
       maskType: 3
       maskSource: {instanceID: 0}
-      additiveReferencePoseFrame: 0
+      additiveReferencePoseFrame: 121
     - serializedVersion: 16
       name: Mon_BlackDragon31_Btl_Int01
       takeName: Mon_BlackDragon31_Btl_Int01
