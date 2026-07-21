@@ -27,6 +27,7 @@ public class MenuController : MonoBehaviour
     [Header("Pause")]
     [SerializeField] private GameObject _pausePanel;
     [SerializeField] private Button _btnResume;
+    [SerializeField] private Button _btnRestartCurrentLevel;
     [SerializeField] private Button _btnPauseToMenu;
 
     [Header("Victory Screen")]
@@ -35,10 +36,13 @@ public class MenuController : MonoBehaviour
     [SerializeField] private TMP_Text _victoryTimeText;
     [SerializeField] private TMP_Text _victoryKillText;
     [SerializeField] private Button _btnVictoryContinue;
+    [SerializeField] private Button _btnVictoryReplay;
     [SerializeField] private Button _btnVictoryMenu;
 
     [Header("Game Over Screen")]
     [SerializeField] private GameObject _gameOverPanel;
+    [SerializeField] private TMP_Text _gameOverScoreText;
+    [SerializeField] private TMP_Text _gameOverKillText;
     [SerializeField] private Button _btnRetry;
     [SerializeField] private Button _btnGameOverMenu;
 
@@ -77,6 +81,55 @@ public class MenuController : MonoBehaviour
         }
     }
 
+    private static string FormatTime(
+    float totalSeconds
+    )
+    {
+        totalSeconds =
+            Mathf.Max(0f, totalSeconds);
+
+        int minutes =
+            Mathf.FloorToInt(
+                totalSeconds / 60f
+            );
+
+        int seconds =
+            Mathf.FloorToInt(
+                totalSeconds % 60f
+            );
+
+        return $"{minutes:00}:{seconds:00}";
+    }
+
+    private void UpdateVictoryStatistics()
+    {
+        LevelManager levelManager =
+            LevelManager.Instance;
+
+        if (levelManager == null)
+            return;
+
+        if (_victoryScoreText != null)
+        {
+            _victoryScoreText.text =
+                $"Điểm: " +
+                $"{levelManager.ScoreThisLevel}";
+        }
+
+        if (_victoryTimeText != null)
+        {
+            _victoryTimeText.text =
+                $"Thời gian: " +
+                $"{FormatTime(levelManager.ElapsedTimeThisLevel)}";
+        }
+
+        if (_victoryKillText != null)
+        {
+            _victoryKillText.text =
+                $"Số quái đã tiêu diệt: " +
+                $"{levelManager.KillsThisLevel}";
+        }
+    }
     private void ResolveCrosshairReference()
     {
         if (_crosshairRoot != null)
@@ -113,6 +166,12 @@ public class MenuController : MonoBehaviour
 
     private void BindButtons()
     {
+        if (_btnVictoryReplay != null)
+        {
+            _btnVictoryReplay.onClick.AddListener(
+                ReplayCurrentLevel
+            );
+        }
         if (_btnPlay != null)
             _btnPlay.onClick.AddListener(OnPlayClicked);
 
@@ -139,6 +198,13 @@ public class MenuController : MonoBehaviour
             _btnVictoryMenu.interactable = true;
         }
 
+        if (_btnRestartCurrentLevel != null)
+        {
+            _btnRestartCurrentLevel.onClick.AddListener(
+                RestartCurrentLevel
+            );
+        }
+
         if (_btnRetry != null)
             _btnRetry.onClick.AddListener(OnRetry);
 
@@ -146,41 +212,150 @@ public class MenuController : MonoBehaviour
             _btnGameOverMenu.onClick.AddListener(LoadMainMenu);
     }
 
+    private void ReplayCurrentLevel()
+    {
+        Time.timeScale = 1f;
+
+        _endOverlayOpen = false;
+        _isPaused = false;
+
+        if (_victoryPanel != null)
+            _victoryPanel.SetActive(false);
+
+        SceneManager.LoadScene(
+            SceneManager.GetActiveScene().name
+        );
+    }
+
+    public void RestartCurrentLevel()
+    {
+        Time.timeScale = 1f;
+
+        _isPaused = false;
+        _endOverlayOpen = false;
+
+        SceneManager.LoadScene(
+            SceneManager.GetActiveScene().name
+        );
+    }
     private void FixVictoryOverlayLayout()
     {
-        if (_victoryPanel == null) return;
+        if (_victoryPanel == null)
+            return;
 
-        var card = _victoryPanel.transform.Find("OverlayCard");
-        if (card == null) return;
+        Transform card =
+            _victoryPanel.transform.Find(
+                "OverlayCard"
+            );
 
-        ReparentIfNeeded(_victoryScoreText, card);
-        ReparentIfNeeded(_victoryTimeText, card);
+        if (card == null)
+            return;
+
+        ReparentIfNeeded(
+            _victoryScoreText,
+            card
+        );
+
+        ReparentIfNeeded(
+            _victoryTimeText,
+            card
+        );
+
+        ReparentIfNeeded(
+            _victoryKillText,
+            card
+        );
 
         if (_victoryScoreText != null)
-            SetOverlayStat(_victoryScoreText.rectTransform, 0.50f);
+        {
+            SetOverlayStat(
+                _victoryScoreText.rectTransform,
+                0.62f
+            );
+        }
+
         if (_victoryTimeText != null)
-            SetOverlayStat(_victoryTimeText.rectTransform, 0.38f);
+        {
+            SetOverlayStat(
+                _victoryTimeText.rectTransform,
+                0.51f
+            );
+        }
 
-        FixOverlayButton(card, "Btn_1", 0.22f);
-        FixOverlayButton(card, "Btn_2", 0.08f);
+        if (_victoryKillText != null)
+        {
+            SetOverlayStat(
+                _victoryKillText.rectTransform,
+                0.40f
+            );
+        }
 
-        var cardRt = card.GetComponent<RectTransform>();
-        if (cardRt != null)
-            cardRt.sizeDelta = new Vector2(560f, 430f);
+        FixOverlayButton(
+            _btnVictoryContinue,
+            card,
+            0.24f
+        );
+
+        FixOverlayButton(
+            _btnVictoryReplay,
+            card,
+            0.14f
+        );
+
+        FixOverlayButton(
+            _btnVictoryMenu,
+            card,
+            0.04f
+        );
+
+        RectTransform cardRect =
+            card.GetComponent<RectTransform>();
+
+        if (cardRect != null)
+        {
+            cardRect.sizeDelta =
+                new Vector2(560f, 500f);
+        }
     }
 
-    private static void FixOverlayButton(Transform card, string name, float anchorY)
+    private static void FixOverlayButton(
+    Button button,
+    Transform card,
+    float anchorY
+)
     {
-        var t = card.Find(name);
-        if (t == null) return;
-        var rt = t.GetComponent<RectTransform>();
-        if (rt == null) return;
-        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, anchorY);
-        rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.anchoredPosition = Vector2.zero;
-        rt.sizeDelta = new Vector2(320f, 52f);
-    }
+        if (button == null || card == null)
+            return;
 
+        if (button.transform.parent != card)
+        {
+            button.transform.SetParent(
+                card,
+                false
+            );
+        }
+
+        RectTransform rectTransform =
+            button.GetComponent<RectTransform>();
+
+        if (rectTransform == null)
+            return;
+
+        rectTransform.anchorMin =
+            new Vector2(0.5f, anchorY);
+
+        rectTransform.anchorMax =
+            new Vector2(0.5f, anchorY);
+
+        rectTransform.pivot =
+            new Vector2(0.5f, 0.5f);
+
+        rectTransform.anchoredPosition =
+            Vector2.zero;
+
+        rectTransform.sizeDelta =
+            new Vector2(320f, 52f);
+    }
     private static void ReparentIfNeeded(TMP_Text text, Transform card)
     {
         if (text == null || text.transform.parent == card) return;
@@ -281,45 +456,55 @@ public class MenuController : MonoBehaviour
         SceneManager.LoadScene(SCENE_MAIN_MENU);
     }
 
+    private void UpdateGameOverStatistics()
+    {
+        LevelManager levelManager =
+            LevelManager.Instance;
+
+        if (levelManager == null)
+            return;
+
+        if (_gameOverScoreText != null)
+        {
+            _gameOverScoreText.text =
+                $"Điểm: " +
+                $"{levelManager.ScoreThisLevel}";
+        }
+
+        if (_gameOverKillText != null)
+        {
+            _gameOverKillText.text =
+                $"Số quái đã tiêu diệt: " +
+                $"{levelManager.KillsThisLevel}";
+        }
+    }
+
     private void ShowVictory()
     {
-        if (_victoryPanel == null) return;
+        if (_victoryPanel == null)
+            return;
 
         _endOverlayOpen = true;
         _isPaused = false;
 
-        FixVictoryOverlayLayout();
         UIRaycastHelper.FixScene();
 
         _victoryPanel.SetActive(true);
         _victoryPanel.transform.SetAsLastSibling();
 
+        UpdateVictoryStatistics();
+
         if (_btnVictoryContinue != null)
             _btnVictoryContinue.interactable = true;
+
+        if (_btnVictoryReplay != null)
+            _btnVictoryReplay.interactable = true;
+
         if (_btnVictoryMenu != null)
             _btnVictoryMenu.interactable = true;
 
-        if (LevelManager.Instance != null)
-        {
-            int level = LevelManager.Instance.CurrentLevel;
-
-            if (level == 1)
-                LevelSelectUI.UnlockWarzone();
-
-            if (_victoryScoreText != null && EconomyManager.Instance != null)
-                _victoryScoreText.text = $"Điểm: {EconomyManager.Instance.CurrentMoney} xu";
-
-            if (_victoryTimeText != null)
-            {
-                float remaining = LevelManager.Instance.TimeRemaining;
-                float elapsed = LevelManager.LEVEL_TIME_LIMIT - remaining;
-                int min = Mathf.FloorToInt(elapsed / 60f);
-                int sec = Mathf.FloorToInt(elapsed % 60f);
-                _victoryTimeText.text = $"Thời gian: {min:00}:{sec:00}";
-            }
-        }
-
         Time.timeScale = 0f;
+
         UnlockCursor();
         SetCrosshairVisible(false);
     }
@@ -328,30 +513,62 @@ public class MenuController : MonoBehaviour
     {
         Time.timeScale = 1f;
         _endOverlayOpen = false;
+        _isPaused = false;
 
         if (_victoryPanel != null)
             _victoryPanel.SetActive(false);
 
-        SetCrosshairVisible(true);
-
         if (LevelManager.Instance != null)
+        {
             LevelManager.Instance.ContinueAfterVictory();
-        else
+            return;
+        }
+
+        // Fallback chỉ dùng khi scene gameplay bị thiếu LevelManager.
+        string currentScene =
+            SceneManager.GetActiveScene().name;
+
+        Debug.LogWarning(
+            $"[MenuController] Không tìm thấy LevelManager trong scene {currentScene}."
+        );
+
+        if (currentScene == SCENE_DESERT)
+        {
             SceneManager.LoadScene(SCENE_WARZONE);
+        }
+        else if (currentScene == SCENE_WARZONE)
+        {
+            SceneManager.LoadScene(SCENE_VICTORY);
+        }
+        else
+        {
+            SceneManager.LoadScene(SCENE_MAIN_MENU);
+        }
     }
 
     private void ShowGameOver()
     {
-        if (_gameOverPanel == null) return;
+        if (_gameOverPanel == null)
+            return;
 
         _endOverlayOpen = true;
         _isPaused = false;
 
         UIRaycastHelper.FixScene();
+
         _gameOverPanel.SetActive(true);
         _gameOverPanel.transform.SetAsLastSibling();
 
+        UpdateGameOverStatistics();
+
+        if (_btnRetry != null)
+            _btnRetry.interactable = true;
+
+        if (_btnGameOverMenu != null)
+            _btnGameOverMenu.interactable = true;
+
         Time.timeScale = 0f;
+
         UnlockCursor();
         SetCrosshairVisible(false);
     }

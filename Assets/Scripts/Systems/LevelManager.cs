@@ -8,6 +8,19 @@ public class LevelManager : MonoBehaviour
     public static LevelManager Instance { get; private set; }
 
     public int KillsThisLevel { get; private set; }
+    public int ScoreThisLevel { get; private set; }
+
+    public float ElapsedTimeThisLevel
+    {
+        get
+        {
+            return Mathf.Clamp(
+                LEVEL_TIME_LIMIT - TimeRemaining,
+                0f,
+                LEVEL_TIME_LIMIT
+            );
+        }
+    }
 
     private bool _summarySaved = false;
 
@@ -31,9 +44,12 @@ public class LevelManager : MonoBehaviour
     private bool _victorySequenceStarted = false;
 
     [Header("End Flow")]
-    [SerializeField] private float victoryUiDelay = 4f;
+    [SerializeField] private float victoryUiDelay = 8f;
     [SerializeField] private float gameOverUiDelay = 0f;
 
+    [Header("Score")]
+    [SerializeField] private int normalEnemyScore = 100;
+    [SerializeField] private int bossScore = 1000;
     private Coroutine _victoryRoutine;
     private Coroutine _gameOverRoutine;
 
@@ -61,16 +77,27 @@ public class LevelManager : MonoBehaviour
         Time.timeScale = 1f;
         TimeRemaining = LEVEL_TIME_LIMIT;
 
-        // Hiện game chỉ có 2 level gameplay: Desert = 1, Warzone = 2.
-        CurrentLevel = SceneManager.GetActiveScene().name == "Desert" ? 1 : 2;
-        int currentMoney = EconomyManager.Instance != null
-        ? EconomyManager.Instance.CurrentMoney
-        : 0;
+        KillsThisLevel = 0;
+        ScoreThisLevel = 0;
 
-        GameRunState.StartLevel(currentMoney);
+        CurrentLevel =
+            SceneManager.GetActiveScene().name
+            == "Desert"
+                ? 1
+                : 2;
 
-        OnTimerUpdated?.Invoke(TimeRemaining);
-        OnEnemyCountChanged?.Invoke(EnemiesAlive);
+        GameRunState.StartLevel();
+
+        EconomyManager.Instance
+            ?.NotifyMoneyChanged();
+
+        OnTimerUpdated?.Invoke(
+            TimeRemaining
+        );
+
+        OnEnemyCountChanged?.Invoke(
+            EnemiesAlive
+        );
     }
 
     private void Update()
@@ -98,12 +125,20 @@ public class LevelManager : MonoBehaviour
 
     public void RegisterEnemyKilled()
     {
-        if (_levelEnded) return;
+        if (_levelEnded)
+            return;
 
-        EnemiesAlive = Mathf.Max(0, EnemiesAlive - 1);
+        EnemiesAlive =
+            Mathf.Max(0, EnemiesAlive - 1);
+
         KillsThisLevel++;
 
-        OnEnemyCountChanged?.Invoke(EnemiesAlive);
+        ScoreThisLevel +=
+            Mathf.Max(0, normalEnemyScore);
+
+        OnEnemyCountChanged?.Invoke(
+            EnemiesAlive
+        );
     }
 
     public void SetWaveIntermission(bool isIntermission)
@@ -126,7 +161,17 @@ public class LevelManager : MonoBehaviour
 
     public void RegisterBossDefeated()
     {
+        if (_levelEnded ||
+            _victorySequenceStarted)
+        {
+            return;
+        }
+
         KillsThisLevel++;
+
+        ScoreThisLevel +=
+            Mathf.Max(0, bossScore);
+
         TriggerVictory();
     }
 
@@ -143,6 +188,7 @@ public class LevelManager : MonoBehaviour
         _victoryRoutine = StartCoroutine(VictoryRoutine());
     }
 
+
     private IEnumerator VictoryRoutine()
     {
         // Chặn timer/spawn logic nhưng KHÔNG pause thời gian ngay,
@@ -154,6 +200,7 @@ public class LevelManager : MonoBehaviour
         if (victoryUiDelay > 0f)
             yield return new WaitForSecondsRealtime(victoryUiDelay);
 
+        SaveManager.CompleteLevel(CurrentLevel);
         OnLevelVictory?.Invoke();
         _victoryRoutine = null;
     }
@@ -211,23 +258,35 @@ public class LevelManager : MonoBehaviour
 
         _summarySaved = true;
 
-        WeaponManager weaponManager = FindFirstObjectByType<WeaponManager>();
+        WeaponManager weaponManager =
+            FindFirstObjectByType<WeaponManager>();
+
         if (weaponManager != null)
+        {
             weaponManager.SaveRunState();
+        }
 
-        int currentMoney = EconomyManager.Instance != null
-            ? EconomyManager.Instance.CurrentMoney
-            : 0;
+        int currentMoney =
+            EconomyManager.Instance != null
+                ? EconomyManager.Instance.CurrentMoney
+                : 0;
 
-        float elapsedTime = LEVEL_TIME_LIMIT - TimeRemaining;
+        GameRunState.SaveMoney(currentMoney);
 
         GameRunState.FinishLevel(
-            currentMoney,
-            elapsedTime,
+            ScoreThisLevel,
+            ElapsedTimeThisLevel,
             KillsThisLevel
         );
 
-        Debug.Log($"[LevelManager] Saved run summary | Score: {GameRunState.TotalScore} | Time: {GameRunState.TotalTime} | Kills: {GameRunState.TotalKills}");
+        Debug.Log(
+            $"[LevelManager] Saved summary | " +
+            $"Level={CurrentLevel}, " +
+            $"Score={ScoreThisLevel}, " +
+            $"Time={ElapsedTimeThisLevel:F1}, " +
+            $"Kills={KillsThisLevel}, " +
+            $"Money checkpoint={currentMoney}"
+        );
     }
 
     // ── UI Debug Helpers ─────────────────────────────────────────────────────

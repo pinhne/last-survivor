@@ -51,6 +51,10 @@ MonoBehaviour:
   attackRange: 3
   chargeDashSpeed: 10
   damage: 35
+  attackTriggerName: Attack
+  attackCooldown: 1.5
+  attackAnimationTimeout: 3
+  hitRangeTolerance: 0.75
 --- !u!114 &7477178808778489774
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -821,6 +825,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ba962cf9f9b1a4a449a643a2d85a1dd2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4412183592824405393}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ba962cf9f9b1a4a449a643a2d85a1dd2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 952743283998984664}
   m_SourcePrefab: {fileID: 100100000, guid: ba962cf9f9b1a4a449a643a2d85a1dd2, type: 3}
 --- !u!4 &2500669240115783126 stripped
 Transform:
@@ -854,3 +861,15 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &952743283998984664
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3026412078306475884}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 356f05d52f4853f49baa9facb5ecbc80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossAnimationEvents

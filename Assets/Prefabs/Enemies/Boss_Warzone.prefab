@@ -52,6 +52,11 @@ MonoBehaviour:
   chargeDashSpeed: 10
   damage: 45
   shootRange: 20
+  attackTriggerName: Attack
+  attackCooldown: 2
+  attackAnimationTimeout: 3
+  rayOriginHeight: 1.5
+  playerTargetHeight: 1
   summonPrefabs:
   - {fileID: 2035274418259951901, guid: 98aeb2e746f6dd14d919c392399ce9a5, type: 3}
   - {fileID: 2880779935298703156, guid: bd82d7e47a9c43f4781546aa59622252, type: 3}
@@ -374,6 +379,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ba962cf9f9b1a4a449a643a2d85a1dd2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 345645573349938374}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ba962cf9f9b1a4a449a643a2d85a1dd2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 927937851879530120}
   m_SourcePrefab: {fileID: 100100000, guid: ba962cf9f9b1a4a449a643a2d85a1dd2, type: 3}
 --- !u!1 &1666699831805698566 stripped
 GameObject:
@@ -402,6 +410,18 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &927937851879530120
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1666699831805698566}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7ec6b4cbfe050f4b8493df70a9bae5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IroncladAnimationEvents
 --- !u!4 &2047622729322674364 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: ba962cf9f9b1a4a449a643a2d85a1dd2, type: 3}

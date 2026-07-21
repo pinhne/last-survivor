@@ -16,12 +16,13 @@ public static class GameRunState
     }
 
     private static readonly Dictionary<string, WeaponAmmoState> _weaponAmmoStates = new();
-    private static int _moneyAtLevelStart;
+
     private static bool _runStarted;
 
     public static int TotalScore { get; private set; }
     public static float TotalTime { get; private set; }
     public static int TotalKills { get; private set; }
+    public static int SavedMoney { get; private set; }
     public static string EquippedWeaponName { get; private set; }
 
     public static IEnumerable<string> SavedWeaponNames => _weaponAmmoStates.Keys;
@@ -34,29 +35,51 @@ public static class GameRunState
         TotalScore = 0;
         TotalTime = 0f;
         TotalKills = 0;
+        SavedMoney = 0;
         EquippedWeaponName = null;
-        _moneyAtLevelStart = 0;
+
         _runStarted = true;
 
         WriteSummaryToPlayerPrefs();
     }
 
-    public static void StartLevel(int currentMoney)
+    public static void StartLevel()
     {
-        _moneyAtLevelStart = currentMoney;
+        _runStarted = true;
     }
 
-    public static void FinishLevel(int currentMoney, float elapsedTime, int killsThisLevel)
+    public static void FinishLevel(
+    int scoreThisLevel,
+    float elapsedTime,
+    int killsThisLevel
+)
     {
-        int scoreGainedThisLevel = Mathf.Max(0, currentMoney - _moneyAtLevelStart);
+        TotalScore += Mathf.Max(
+            0,
+            scoreThisLevel
+        );
 
-        TotalScore += scoreGainedThisLevel;
-        TotalTime += Mathf.Max(0f, elapsedTime);
-        TotalKills += Mathf.Max(0, killsThisLevel);
+        TotalTime += Mathf.Max(
+            0f,
+            elapsedTime
+        );
 
-        _moneyAtLevelStart = currentMoney;
+        TotalKills += Mathf.Max(
+            0,
+            killsThisLevel
+        );
 
         WriteSummaryToPlayerPrefs();
+
+        Debug.Log(
+            $"[GameRunState] Level finished | " +
+            $"Added Score={scoreThisLevel}, " +
+            $"Time={elapsedTime:F1}, " +
+            $"Kills={killsThisLevel} | " +
+            $"Total Score={TotalScore}, " +
+            $"Total Time={TotalTime:F1}, " +
+            $"Total Kills={TotalKills}"
+        );
     }
 
     public static void SaveWeaponAmmo(string weaponName, int currentAmmo, int reserveAmmo)
@@ -65,6 +88,16 @@ public static class GameRunState
             return;
 
         _weaponAmmoStates[weaponName] = new WeaponAmmoState(currentAmmo, reserveAmmo);
+    }
+
+    public static void SaveMoney(int currentMoney)
+    {
+        SavedMoney = Mathf.Max(0, currentMoney);
+    }
+
+    public static int GetSavedMoney()
+    {
+        return Mathf.Max(0, SavedMoney);
     }
 
     public static bool TryGetWeaponAmmo(string weaponName, out WeaponAmmoState state)

@@ -9,7 +9,6 @@ using UnityEngine.UI;
 /// </summary>
 public class LevelSelectUI : MonoBehaviour
 {
-    public const string PREF_WARZONE_UNLOCKED = "LS_WarzoneUnlocked";
 
     [Header("Panel")]
     [SerializeField] private GameObject _levelSelectPanel;
@@ -67,48 +66,56 @@ public class LevelSelectUI : MonoBehaviour
 
     public void RefreshLockState()
     {
-        bool warzoneUnlocked = IsWarzoneUnlocked();
+        bool warzoneUnlocked =
+            SaveManager.IsLevelUnlocked(2);
 
         if (_btnWarzone != null)
-            _btnWarzone.interactable = warzoneUnlocked;
+            _btnWarzone.interactable =
+                warzoneUnlocked;
 
         if (_warzoneLockIcon != null)
-            _warzoneLockIcon.SetActive(!warzoneUnlocked);
+            _warzoneLockIcon.SetActive(
+                !warzoneUnlocked
+            );
 
         if (_desertLabel != null)
         {
-            _desertLabel.text = SceneLoadHelper.IsInBuild(MenuController.SCENE_DESERT)
-                ? "Màn 1 — Chiến trường Sa mạc"
-                : "Màn 1 — Demo UI (map Quân chưa giao)";
+            _desertLabel.text =
+                "Màn 1 — Chiến trường Sa mạc";
         }
 
         if (_warzoneLabel != null)
         {
-            _warzoneLabel.text = warzoneUnlocked
-                ? "Màn 2 — Khu đô thị đổ nát"
-                : "Màn 2 — Đánh bại Boss Màn 1 để mở khóa";
+            _warzoneLabel.text =
+                warzoneUnlocked
+                    ? "Màn 2 — Khu đô thị đổ nát"
+                    : "Màn 2 — Đánh bại Boss Màn 1 để mở khóa";
         }
     }
 
     private void OnWarzoneClicked()
     {
-        if (!IsWarzoneUnlocked()) return;
-        LoadLevel(MenuController.SCENE_WARZONE);
+        if (!SaveManager.IsLevelUnlocked(2))
+        {
+            Debug.Log(
+                "[LevelSelectUI] Warzone chưa được mở khóa."
+            );
+
+            return;
+        }
+
+        LoadLevel(
+            MenuController.SCENE_WARZONE
+        );
     }
 
     private void LoadLevel(string sceneName)
     {
+        // Reset dữ liệu của lượt chơi:
+        // score, thời gian, kill, súng đã mua...
+        GameRunState.ResetRun();
+
+        // Không reset ví tiền tích lũy.
         SceneLoadHelper.Load(sceneName);
-    }
-
-    public static bool IsWarzoneUnlocked()
-    {
-        return PlayerPrefs.GetInt(PREF_WARZONE_UNLOCKED, 0) == 1;
-    }
-
-    public static void UnlockWarzone()
-    {
-        PlayerPrefs.SetInt(PREF_WARZONE_UNLOCKED, 1);
-        PlayerPrefs.Save();
     }
 }
